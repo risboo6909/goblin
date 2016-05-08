@@ -66,7 +66,9 @@ func update() {
 				}
 			}
 			if ev.Key == termbox.KeySpace || ev.Key == termbox.KeyEnter {
-				board.SetCell(cursor.Col, cursor.Row, misc.X)
+				if board.GetCell(cursor.Col, cursor.Row) == misc.EMPTY {
+					board.SetCell(cursor.Col, cursor.Row, misc.X)
+				}
 			}
 		}
 	}
