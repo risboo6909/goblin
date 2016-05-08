@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/nsf/termbox-go"
 	"github.com/risboo6909/goblin/goblin-misc"
+	"github.com/risboo6909/goblin/goblin-ui"
 )
 
 var gameState = StateGameplay
@@ -13,7 +13,8 @@ var gameState = StateGameplay
 var board = misc.NewBoard(10, 10, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
 	termbox.ColorRed, termbox.ColorBlack)
 
-var cursor = &misc.Cursor{Col: 2, Row: 1, FgColor: termbox.ColorGreen, BgColor: termbox.ColorWhite}
+var cursor = &misc.Cursor{Col: 2, Row: 1,
+	FgColor: termbox.ColorGreen, BgColor: termbox.ColorWhite}
 
 func update() {
 
@@ -56,22 +57,10 @@ func paint() {
 	switch gameState {
 
 	case StateGameplay:
-		drawBoard(board, cursor)
+		ui.DrawBoard(board, cursor)
 	}
 
 	termbox.Flush()
-}
-
-func printTb(x, y int, fg, bg termbox.Attribute, msg string) {
-	for _, c := range msg {
-		termbox.SetCell(x, y, c, fg, bg)
-		x++
-	}
-}
-
-func printfTb(x, y int, fg, bg termbox.Attribute, format string, args ...interface{}) {
-	s := fmt.Sprintf(format, args...)
-	printTb(x, y, fg, bg, s)
 }
 
 func main() {

@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"math"
@@ -133,15 +133,15 @@ func fillBoard(board *misc.BoardDescription) {
 	}
 }
 
-func drawCursor(topX, topY int, cursor *misc.Cursor) {
-	x := topX + cursor.Col*4
-	y := topY + cursor.Row*2
+func drawCursor(board *misc.BoardDescription, cursor *misc.Cursor) {
+	x := board.X + 2 + cursor.Col*4
+	y := board.Y + 1 + cursor.Row*2
 	val := board.GetCell(cursor.Col, cursor.Row)
 	termbox.SetCell(x, y, val, cursor.FgColor, cursor.BgColor)
 }
 
-// drawBoard draws ASCII game board
-func drawBoard(board *misc.BoardDescription, cursor *misc.Cursor) {
+// DrawBoard draws ASCII game board
+func DrawBoard(board *misc.BoardDescription, cursor *misc.Cursor) {
 
 	x := board.X + 2
 	y := board.Y + 1
@@ -155,5 +155,5 @@ func drawBoard(board *misc.BoardDescription, cursor *misc.Cursor) {
 	drawLeftAndRight(x+board.GetWidth(), y, board, '┤', false)
 
 	fillBoard(board)
-	drawCursor(x, y, cursor)
+	drawCursor(board, cursor)
 }
