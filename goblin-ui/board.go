@@ -16,6 +16,14 @@ func modN(n float64) func(int) float64 {
 var mod4 = modN(4)
 var mod2 = modN(2)
 
+func getScrX(board *misc.BoardDescription, col int) int {
+	return board.X + 2 + col*4
+}
+
+func getScrY(board *misc.BoardDescription, row int) int {
+	return board.Y + 1 + row*2
+}
+
 // drawHorizLine draws horizontal board lines
 func drawHorizLine(color, bgcolor termbox.Attribute, x, y, width int) {
 
@@ -118,15 +126,14 @@ func fillBoard(board *misc.BoardDescription) {
 	for i := 0; i < board.CellsHoriz; i++ {
 		for j := 0; j < board.CellsVert; j++ {
 
-			realX := board.X + 2 + i*4
-			realY := board.Y + 1 + j*2
+			scrX := getScrX(board, i)
+			scrY := getScrY(board, j)
 
 			if board.GetCell(i, j) == misc.X {
-				termbox.SetCell(realX, realY, misc.X,
-					termbox.ColorWhite, termbox.ColorBlack)
+				termbox.SetCell(scrX, scrY, misc.X, termbox.ColorWhite, termbox.ColorBlack)
+
 			} else if board.GetCell(i, j) == misc.O {
-				termbox.SetCell(realX, realY, misc.O,
-					termbox.ColorWhite, termbox.ColorBlack)
+				termbox.SetCell(scrX, scrY, misc.O, termbox.ColorWhite, termbox.ColorBlack)
 			}
 
 		}
@@ -134,10 +141,9 @@ func fillBoard(board *misc.BoardDescription) {
 }
 
 func drawCursor(board *misc.BoardDescription, cursor *misc.Cursor) {
-	x := board.X + 2 + cursor.Col*4
-	y := board.Y + 1 + cursor.Row*2
 	val := board.GetCell(cursor.Col, cursor.Row)
-	termbox.SetCell(x, y, val, cursor.FgColor, cursor.BgColor)
+	termbox.SetCell(getScrX(board, cursor.Col), getScrY(board, cursor.Row),
+		val, cursor.FgColor, cursor.BgColor)
 }
 
 // DrawBoard draws ASCII game board
