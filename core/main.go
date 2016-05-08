@@ -1,44 +1,41 @@
 package main
 
 import (
-//    "github.com/risboo6909/goblin/ai"
-    "github.com/nsf/termbox-go"
-    "fmt"
+	//    "github.com/risboo6909/goblin/ai"
+	"fmt"
+
+	"github.com/nsf/termbox-go"
 )
 
 var gameState = StateGameplay
+var board = newBoard(15, 15, 10, 10, termbox.ColorCyan, termbox.ColorBlack,
+	termbox.ColorRed, termbox.ColorBlack)
 
 func update() {
 
-    // switch gameState {
-    //
-    //     case StateGameplay:
-    //         fmt.Println("Gameplay update")
-    //
-    // }
+	// switch gameState {
+	//
+	//     case StateGameplay:
+	//         fmt.Println("Gameplay update")
+	//
+	// }
 
 }
-
 
 func paint() {
 
-    termbox.Clear(termbox.ColorBlue, termbox.ColorBlue)
+	termbox.Clear(termbox.ColorBlue, termbox.ColorBlue)
 
-    switch gameState {
+	switch gameState {
 
-        case StateGameplay:
+	case StateGameplay:
 
-            boardParams := BoardParams{x:10, y:10, cellsHoriz:19, cellsVert:19,
-            boardColor: termbox.ColorCyan, boardBg: termbox.ColorBlack,
-            labelsColor: termbox.ColorRed, labelsBg: termbox.ColorBlack}
+		drawBoard(board)
 
-            drawBoard(boardParams)
+	}
 
-    }
-
-    termbox.Flush()
+	termbox.Flush()
 }
-
 
 func printTb(x, y int, fg, bg termbox.Attribute, msg string) {
 	for _, c := range msg {
@@ -52,33 +49,28 @@ func printfTb(x, y int, fg, bg termbox.Attribute, format string, args ...interfa
 	printTb(x, y, fg, bg, s)
 }
 
-
 func main() {
 
-    err := termbox.Init()
-    if err != nil {
-        panic(err)
-    }
+	err := termbox.Init()
+	if err != nil {
+		panic(err)
+	}
 
-    defer termbox.Close()
+	defer termbox.Close()
 
-    mainloop:
+mainloop:
 
-        for {
-
-            ev := termbox.PollEvent();
-
-            switch  ev.Type {
-                // handle ESC as exit
-                case termbox.EventKey:
-                    if ev.Key == termbox.KeyEsc {
-                        break mainloop
-                }
-
-            }
-
-            update()
-            paint()
-        }
+	for {
+		ev := termbox.PollEvent()
+		switch ev.Type {
+		// handle ESC as exit
+		case termbox.EventKey:
+			if ev.Key == termbox.KeyEsc {
+				break mainloop
+			}
+		}
+		update()
+		paint()
+	}
 
 }
