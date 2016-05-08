@@ -16,11 +16,21 @@ func modN(n float64) func(int) float64 {
 var mod4 = modN(4)
 var mod2 = modN(2)
 
+// Cursor represents board cursor position
+type Cursor struct {
+	fgColor, bgColor termbox.Attribute
+	col, row         int
+}
+
+const (
+	X     = 'X'
+	O     = 'O'
+	EMPTY = ' '
+)
+
 // Cell structure defines possible cell state, it can be eiather X, O or EMPTY
 type Cell struct {
-	X     uint8
-	O     uint8
-	EMPTY uint8
+	val rune
 }
 
 // BoardDescription defines main board properties
@@ -43,7 +53,10 @@ type BoardDescription struct {
 func newBoard(cellsHoriz, cellsVert, x, y int, boardColor, boardBg, labelsColor,
 	labelsBg termbox.Attribute) *BoardDescription {
 	board := &BoardDescription{cellsHoriz, cellsVert, x, y, boardColor, boardBg,
-		labelsColor, labelsBg, make([]Cell, cellsHoriz, cellsVert)}
+		labelsColor, labelsBg, make([]Cell, cellsHoriz*cellsVert)}
+	for i := range board.content {
+		board.content[i].val = EMPTY
+	}
 	return board
 }
 
@@ -63,17 +76,17 @@ func (p *BoardDescription) toLinear(col, row int) (int, error) {
 	return -1, nil
 }
 
-func (p *BoardDescription) setCell(col, row int, cell Cell) {
+func (p *BoardDescription) setCell(col, row int, val rune) {
 	idx, err := p.toLinear(col, row)
 	if err != nil {
-		p.content[idx] = cell
+		p.content[idx] = Cell{val}
 	}
 }
 
-func (p *BoardDescription) getCell(col, row int) Cell {
+func (p *BoardDescription) getCell(col, row int) rune {
 	idx, err := p.toLinear(col, row)
 	if err != nil {
-		return p.content[idx]
+		return p.content[idx].val
 	}
 	panic(err)
 }
@@ -176,17 +189,46 @@ func drawLeftAndRight(x, y int, p *BoardDescription, middle rune, labels bool) {
 
 }
 
-// drawBoard draws ASCII game board
-func drawBoard(boardParams *BoardDescription) {
+func fillBoard(board *BoardDescription) {
+	for i := 0; i < board.cellsHoriz; i++ {
+		for j := 0; j < board.cellsVert; j++ {
 
-	x := boardParams.x + 2
-	y := boardParams.y + 2
+			realX := board.x + 2 + i*4
+			realY := board.y + 1 + j*2
+
+			if board.getCell(i, j) == X {
+				termbox.SetCell(realX, realY, 'X',
+					termbox.ColorWhite, termbox.ColorBlack)
+			} else if board.getCell(i, j) == O {
+				termbox.SetCell(realX, realY, 'O',
+					termbox.ColorWhite, termbox.ColorBlack)
+			}
+
+		}
+	}
+}
+
+func drawCursor(topX, topY int, cursor *Cursor) {
+	x := topX + cursor.col*4
+	y := topY + cursor.row*2
+	val := board.getCell(cursor.col, cursor.row)
+	termbox.SetCell(x, y, val, cursor.fgColor, cursor.bgColor)
+}
+
+// drawBoard draws ASCII game board
+func drawBoard(board *BoardDescription, cursor *Cursor) {
+
+	x := board.x + 2
+	y := board.y + 1
 
 	// draw top and bottom parts
-	drawTopAndBottom(x, y, boardParams, '┌', '┬', '┐', true)
-	drawTopAndBottom(x, y+boardParams.getHeight(), boardParams, '└', '┴', '┘', false)
+	drawTopAndBottom(x, y, board, '┌', '┬', '┐', true)
+	drawTopAndBottom(x, y+board.getHeight(), board, '└', '┴', '┘', false)
 
 	// draw left and right parts
-	drawLeftAndRight(x, y, boardParams, '├', true)
-	drawLeftAndRight(x+boardParams.getWidth(), y, boardParams, '┤', false)
+	drawLeftAndRight(x, y, board, '├', true)
+	drawLeftAndRight(x+board.getWidth(), y, board, '┤', false)
+
+	fillBoard(board)
+	drawCursor(x, y, cursor)
 }
