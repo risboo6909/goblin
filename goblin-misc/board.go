@@ -63,19 +63,25 @@ func (p *BoardDescription) GetHeight() int {
 	return (p.CellsVert - 1) * 2
 }
 
+// GetHorizSlice returns a slice of any row of a board from start to end inclusive
+func (p *BoardDescription) GetHorizSlice(row, start, end int) []Cell {
+	startIdx, _ := p.ToLinear(start, row)
+	endIdx, _ := p.ToLinear(end, row)
+	return p.Content[startIdx : endIdx+1]
+}
+
 // ToLinear converts col and row into linear address
 func (p *BoardDescription) ToLinear(col, row int) (int, error) {
 	if col >= 0 && row >= 0 && col < p.CellsHoriz && row < p.CellsVert {
-		return col + row*p.CellsHoriz, errors.New("Index out of bounds error")
+		return row*p.CellsHoriz + col, nil
 	}
-
-	return -1, nil
+	return -1, errors.New("Index out of bounds error")
 }
 
 // SetCell setup cell value for a give col and row
 func (p *BoardDescription) SetCell(col, row int, val rune) {
 	idx, err := p.ToLinear(col, row)
-	if err != nil {
+	if err == nil {
 		p.Content[idx] = Cell{val}
 	}
 }
@@ -83,7 +89,7 @@ func (p *BoardDescription) SetCell(col, row int, val rune) {
 // GetCell returns cell value for a given col and row
 func (p *BoardDescription) GetCell(col, row int) rune {
 	idx, err := p.ToLinear(col, row)
-	if err != nil {
+	if err == nil {
 		return p.Content[idx].Val
 	}
 	panic(err)

@@ -8,14 +8,16 @@ import (
 	"github.com/risboo6909/goblin/goblin-ui"
 )
 
-var gameState = StateGameplay
-var moveBoard = false
+var (
+	gameState = StateGameplay
+	moveBoard = false
 
-var board = misc.NewBoard(10, 10, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
-	termbox.ColorRed, termbox.ColorBlack)
+	board = misc.NewBoard(10, 10, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
+		termbox.ColorRed, termbox.ColorBlack)
 
-var cursor = &misc.Cursor{Col: 2, Row: 1,
-	FgColor: termbox.ColorGreen, BgColor: termbox.ColorWhite}
+	cursor = &misc.Cursor{Col: 2, Row: 1,
+		FgColor: termbox.ColorGreen, BgColor: termbox.ColorWhite}
+)
 
 func update() {
 
@@ -37,6 +39,7 @@ func update() {
 			}
 
 			// cursor control
+
 			if ev.Key == termbox.KeyArrowRight {
 				if moveBoard {
 					board.X++
@@ -44,6 +47,7 @@ func update() {
 					cursor.Col++
 				}
 			}
+
 			if ev.Key == termbox.KeyArrowLeft {
 				if moveBoard {
 					board.X--
@@ -51,6 +55,7 @@ func update() {
 					cursor.Col--
 				}
 			}
+
 			if ev.Key == termbox.KeyArrowUp {
 				if moveBoard {
 					board.Y--
@@ -58,6 +63,7 @@ func update() {
 					cursor.Row--
 				}
 			}
+
 			if ev.Key == termbox.KeyArrowDown {
 				if moveBoard {
 					board.Y++
@@ -65,7 +71,9 @@ func update() {
 					cursor.Row++
 				}
 			}
-			if ev.Key == termbox.KeySpace || ev.Key == termbox.KeyEnter {
+
+			if (ev.Key == termbox.KeySpace || ev.Key == termbox.KeyEnter) && !moveBoard {
+				// can't modify occupied cell
 				if board.GetCell(cursor.Col, cursor.Row) == misc.EMPTY {
 					board.SetCell(cursor.Col, cursor.Row, misc.X)
 				}
