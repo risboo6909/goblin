@@ -9,6 +9,7 @@ import (
 )
 
 var gameState = StateGameplay
+var moveBoard = false
 
 var board = misc.NewBoard(10, 10, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
 	termbox.ColorRed, termbox.ColorBlack)
@@ -21,6 +22,7 @@ func update() {
 	switch gameState {
 
 	case StateGameplay:
+
 		ev := termbox.PollEvent()
 		switch ev.Type {
 
@@ -30,18 +32,38 @@ func update() {
 				os.Exit(0)
 			}
 
+			if ev.Key == termbox.KeyF2 {
+				moveBoard = !moveBoard
+			}
+
 			// cursor control
 			if ev.Key == termbox.KeyArrowRight {
-				cursor.Col++
+				if moveBoard {
+					board.X++
+				} else {
+					cursor.Col++
+				}
 			}
 			if ev.Key == termbox.KeyArrowLeft {
-				cursor.Col--
+				if moveBoard {
+					board.X--
+				} else {
+					cursor.Col--
+				}
 			}
 			if ev.Key == termbox.KeyArrowUp {
-				cursor.Row--
+				if moveBoard {
+					board.Y--
+				} else {
+					cursor.Row--
+				}
 			}
 			if ev.Key == termbox.KeyArrowDown {
-				cursor.Row++
+				if moveBoard {
+					board.Y++
+				} else {
+					cursor.Row++
+				}
 			}
 			if ev.Key == termbox.KeySpace || ev.Key == termbox.KeyEnter {
 				board.SetCell(cursor.Col, cursor.Row, misc.X)
