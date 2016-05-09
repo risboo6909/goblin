@@ -143,7 +143,7 @@ func fillBoard(board *misc.BoardDescription) {
 func drawCursor(board *misc.BoardDescription, cursor *misc.Cursor) {
 	val := board.GetCell(cursor.Col, cursor.Row)
 	termbox.SetCell(getScrX(board, cursor.Col), getScrY(board, cursor.Row),
-		val, cursor.FgColor, cursor.BgColor)
+		rune(val), cursor.FgColor, cursor.BgColor)
 }
 
 // DrawBoard draws ASCII game board

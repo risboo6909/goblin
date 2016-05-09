@@ -2,6 +2,7 @@ package misc
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/nsf/termbox-go"
 )
@@ -22,9 +23,7 @@ type Cursor struct {
 }
 
 // Cell structure defines possible cell state, it can be eiather X, O or EMPTY
-type Cell struct {
-	Val rune
-}
+type Cell rune
 
 // BoardDescription defines main board properties
 type BoardDescription struct {
@@ -47,8 +46,9 @@ func NewBoard(cellsHoriz, cellsVert, x, y int, boardColor, boardBg, labelsColor,
 	labelsBg termbox.Attribute) *BoardDescription {
 	board := &BoardDescription{cellsHoriz, cellsVert, x, y, boardColor, boardBg,
 		labelsColor, labelsBg, make([]Cell, cellsHoriz*cellsVert)}
+	// fill default EMPTY cells
 	for i := range board.Content {
-		board.Content[i].Val = EMPTY
+		board.Content[i] = EMPTY
 	}
 	return board
 }
@@ -70,6 +70,17 @@ func (p *BoardDescription) GetHorizSlice(row, start, end int) []Cell {
 	return p.Content[startIdx : endIdx+1]
 }
 
+func (p *BoardDescription) GetVertSlice(col, start, end int) []Cell {
+	var tmp = make([]Cell, end-start)
+
+	for i := start; i <= end; i++ {
+		fmt.Printf("%d ", i)
+		idx, _ := p.ToLinear(col, i)
+		tmp = append(tmp, p.Content[idx])
+	}
+	return tmp
+}
+
 // ToLinear converts col and row into linear address
 func (p *BoardDescription) ToLinear(col, row int) (int, error) {
 	if col >= 0 && row >= 0 && col < p.CellsHoriz && row < p.CellsVert {
@@ -79,18 +90,18 @@ func (p *BoardDescription) ToLinear(col, row int) (int, error) {
 }
 
 // SetCell setup cell value for a give col and row
-func (p *BoardDescription) SetCell(col, row int, val rune) {
+func (p *BoardDescription) SetCell(col, row int, val Cell) {
 	idx, err := p.ToLinear(col, row)
 	if err == nil {
-		p.Content[idx] = Cell{val}
+		p.Content[idx] = val
 	}
 }
 
 // GetCell returns cell value for a given col and row
-func (p *BoardDescription) GetCell(col, row int) rune {
+func (p *BoardDescription) GetCell(col, row int) Cell {
 	idx, err := p.ToLinear(col, row)
 	if err == nil {
-		return p.Content[idx].Val
+		return p.Content[idx]
 	}
 	panic(err)
 }
