@@ -2,7 +2,6 @@ package misc
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/nsf/termbox-go"
 )
@@ -70,13 +69,12 @@ func (p *BoardDescription) GetHorizSlice(row, start, end int) []Cell {
 	return p.Content[startIdx : endIdx+1]
 }
 
+// GetVertSlice returns a slice of any column of a board from start to end inclusive
 func (p *BoardDescription) GetVertSlice(col, start, end int) []Cell {
-	var tmp = make([]Cell, end-start)
-
+	var tmp = make([]Cell, end-start+1)
 	for i := start; i <= end; i++ {
-		fmt.Printf("%d ", i)
 		idx, _ := p.ToLinear(col, i)
-		tmp = append(tmp, p.Content[idx])
+		tmp[i-start] = p.Content[idx]
 	}
 	return tmp
 }
