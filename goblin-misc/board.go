@@ -2,6 +2,7 @@ package misc
 
 import (
 	"errors"
+	"math"
 
 	"github.com/nsf/termbox-go"
 )
@@ -43,12 +44,15 @@ type BoardDescription struct {
 // slice for a board contents
 func NewBoard(cellsHoriz, cellsVert, x, y int, boardColor, boardBg, labelsColor,
 	labelsBg termbox.Attribute) *BoardDescription {
+
 	board := &BoardDescription{cellsHoriz, cellsVert, x, y, boardColor, boardBg,
 		labelsColor, labelsBg, make([]Cell, cellsHoriz*cellsVert)}
+
 	// fill default EMPTY cells
 	for i := range board.Content {
 		board.Content[i] = EMPTY
 	}
+
 	return board
 }
 
@@ -73,10 +77,59 @@ func (p *BoardDescription) GetHorizSlice(row, start, end int) []Cell {
 func (p *BoardDescription) GetVertSlice(col, start, end int) []Cell {
 	var tmp = make([]Cell, end-start+1)
 	for i := start; i <= end; i++ {
-		idx, _ := p.ToLinear(col, i)
-		tmp[i-start] = p.Content[idx]
+		tmp[i-start] = p.GetCell(col, i)
 	}
 	return tmp
+}
+
+// GetDiagonalSliceXY returns a slice of a diagonal starts at startCol, startRow to
+// the endCol, endRow inclusive
+func (p *BoardDescription) GetDiagonalSliceXY(startCol, startRow, endCol, endRow int) []Cell {
+	idx := 0
+	diagonalDistance := int(((math.Abs(float64(endCol-startCol)) +
+		math.Abs(float64(endRow-startRow)) + 2) / 2))
+
+	var tmp = make([]Cell, diagonalDistance)
+
+	for startCol < endCol && startRow < endRow {
+		tmp[idx] = p.GetCell(startCol, startRow)
+		idx++
+		// We could handle this with just one variable increment
+		// but I leave both of them for clarity
+		startCol++
+		startRow++
+	}
+
+	return tmp
+}
+
+type Direction uint8
+
+const (
+	Left  = iota // Right to Left diagonal
+	Right        // Left to Right diagonal
+)
+
+func getBounds(col, row int, direction Direction) (int, int) {
+	if direction == Left {
+
+	} else if direction == Right {
+
+	}
+}
+
+// GetRightDiagonal returns diagonal starting at col, row till
+// the end of the board (from Left to Right)
+func (p *BoardDescription) GetRightDiagonal(col, row int) []Cell {
+
+	return p.GetDiagonalSliceXY(col, row, endCol, endRow)
+
+}
+
+// GetLeftDiagonal returns diagonal starting at col, row till
+// the end of the board (from Right to Left)
+func (p *BoardDescription) GetLeftDiagonal(col, row int) []Cell {
+
 }
 
 // ToLinear converts col and row into linear address

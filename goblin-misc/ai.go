@@ -31,6 +31,9 @@ func scanLine(line []Cell, cellNo, chainLen int, player Cell, direction ScanDire
 				} else if direction == vertical {
 					result = append(result, Interval{startRow: idx - chainLen + 1, startCol: cellNo,
 						endRow: idx, endCol: cellNo})
+
+				} else if direction == diagonal {
+
 				}
 
 			}
@@ -78,6 +81,14 @@ func FindChain(board *BoardDescription, chainLen int, player Cell) []Interval {
 			matchVert = append(matchVert, tmp...)
 		}
 	}
+
+	// and finally diagonal
+
+	// . . . . .
+	// x . . . .
+	// . x . . .
+	// . . x . .
+	// . . . x .
 
 	return append(matchHoriz, matchVert...)
 }
