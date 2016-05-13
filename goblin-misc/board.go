@@ -68,8 +68,8 @@ func (p *BoardDescription) GetHeight() int {
 
 // GetHorizSlice returns a slice of any row of a board from start to end inclusive
 func (p *BoardDescription) GetHorizSlice(row, start, end int) []Cell {
-	startIdx, _ := p.ToLinear(start, row)
-	endIdx, _ := p.ToLinear(end, row)
+	startIdx := p.getCell(start, row)
+	endIdx := p.getCell(end, row)
 	return p.Content[startIdx : endIdx+1]
 }
 
