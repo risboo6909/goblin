@@ -12,7 +12,7 @@ var (
 	gameState = StateGameplay
 	moveBoard = false
 
-	board = misc.NewBoard(10, 10, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
+	board = misc.NewBoard(19, 19, 0, 0, termbox.ColorBlack, termbox.ColorBlue,
 		termbox.ColorRed, termbox.ColorBlack)
 
 	cursor = &misc.Cursor{Col: 2, Row: 1,

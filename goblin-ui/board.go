@@ -130,10 +130,10 @@ func fillBoard(board *misc.BoardDescription) {
 			scrY := getScrY(board, j)
 
 			if board.GetCell(i, j) == misc.X {
-				termbox.SetCell(scrX, scrY, misc.X, termbox.ColorWhite, termbox.ColorBlack)
+				termbox.SetCell(scrX, scrY, misc.X, termbox.ColorYellow|termbox.AttrBold, board.BoardBg)
 
 			} else if board.GetCell(i, j) == misc.O {
-				termbox.SetCell(scrX, scrY, misc.O, termbox.ColorWhite, termbox.ColorBlack)
+				termbox.SetCell(scrX, scrY, misc.O, termbox.ColorGreen|termbox.AttrBold, board.BoardBg)
 			}
 
 		}
