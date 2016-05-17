@@ -35,21 +35,41 @@ func TestDiagonalSlices(t *testing.T) {
 		}
 	}
 
+	board.SetCell(0, 14, O)
+	board.SetCell(1, 15, O)
+	board.SetCell(2, 16, O)
+	board.SetCell(3, 17, O)
+	board.SetCell(4, 18, X)
+
 	result2 := board.GetDiagonalSliceXY(0, 14, 5, 19)
 
+	if result2[0] != O || result2[1] != O || result2[2] != O || result2[3] != O || result2[4] != X {
+		t.Fail()
+	}
 
-	// Test convenience slicers
+	board.SetCell(16, 0, X)
+	board.SetCell(17, 1, O)
+	board.SetCell(18, 2, X)
+
+	result3 := board.GetDiagonalSliceXY(16, 0, 19, 3)
+
+	// Test Left->Right slide
 
 	newResult1 := board.GetRightDiagonal(10, 10)
-	if cmpSlices(result1, newResult1) {
+	if !cmpSlices(result1, newResult1) {
 		t.Fail()
 	}
 
 	newResult2 := board.GetRightDiagonal(2, 16)
-	if cmpSlices(result2, newResult2) {
+	if !cmpSlices(result2, newResult2) {
 		t.Fail()
 	}
 
-	fmt.Println(result2)
+	newResult3 := board.GetRightDiagonal(16, 0)
+	if !cmpSlices(result3, newResult3) {
+		t.Fail()
+	}
+
+	fmt.Println(result3)
 
 }
