@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/nsf/termbox-go"
+	"fmt"
 )
 
 const (
@@ -40,6 +41,23 @@ type BoardDescription struct {
 	Content []Cell
 }
 
+type Direction uint8
+
+const (
+	Left  = iota // Right to Left diagonal
+	Right        // Left to Right diagonal
+)
+
+func diagonalDistance(startCol, startRow, endCol, endRow int) int {
+	diagonalDistance := int(((math.Abs(float64(endCol-startCol)) +
+		math.Abs(float64(endRow-startRow)) + 2) / 2))
+	return diagonalDistance
+}
+
+func minIntPair(a, b int) int {
+	return int(math.Min(float64(a), float64(b)))
+}
+
 // NewBoard creates a new struct of type BoardDescription with allocated
 // slice for a board contents
 func NewBoard(cellsHoriz, cellsVert, x, y int, boardColor, boardBg, labelsColor,
@@ -68,8 +86,8 @@ func (p *BoardDescription) GetHeight() int {
 
 // GetHorizSlice returns a slice of any row of a board from start to end inclusive
 func (p *BoardDescription) GetHorizSlice(row, start, end int) []Cell {
-	startIdx := p.getCell(start, row)
-	endIdx := p.getCell(end, row)
+	startIdx, _ := p.ToLinear(start, row)
+	endIdx, _ := p.ToLinear(end, row)
 	return p.Content[startIdx : endIdx+1]
 }
 
@@ -85,11 +103,11 @@ func (p *BoardDescription) GetVertSlice(col, start, end int) []Cell {
 // GetDiagonalSliceXY returns a slice of a diagonal starts at startCol, startRow to
 // the endCol, endRow inclusive
 func (p *BoardDescription) GetDiagonalSliceXY(startCol, startRow, endCol, endRow int) []Cell {
-	idx := 0
-	diagonalDistance := int(((math.Abs(float64(endCol-startCol)) +
-		math.Abs(float64(endRow-startRow)) + 2) / 2))
 
-	var tmp = make([]Cell, diagonalDistance)
+	var (
+		tmp = make([]Cell, diagonalDistance(startCol, startRow, endCol-1, endRow-1))
+		idx = 0
+	)
 
 	for startCol < endCol && startRow < endRow {
 		tmp[idx] = p.GetCell(startCol, startRow)
@@ -103,33 +121,35 @@ func (p *BoardDescription) GetDiagonalSliceXY(startCol, startRow, endCol, endRow
 	return tmp
 }
 
-type Direction uint8
+func (p *BoardDescription) getBounds(col, row int, direction Direction) (int, int, int, int) {
 
-const (
-	Left  = iota // Right to Left diagonal
-	Right        // Left to Right diagonal
-)
-
-func getBounds(col, row int, direction Direction) (int, int) {
 	if direction == Left {
-
-	} else if direction == Right {
-
+		maxDeltaUp := minIntPair(p.CellsHoriz-col, row)
+		maxDeltaDown := minIntPair(col, p.CellsVert-row)
+		return col + maxDeltaUp, row - maxDeltaUp,
+			col - maxDeltaDown, row + maxDeltaDown
 	}
+
+	maxDeltaUp := minIntPair(col, row)
+	maxDeltaDown := minIntPair(p.CellsHoriz-col, p.CellsVert-row)
+	return col - maxDeltaUp, row - maxDeltaUp,
+		col + maxDeltaDown, row + maxDeltaDown
+
 }
 
 // GetRightDiagonal returns diagonal starting at col, row till
 // the end of the board (from Left to Right)
 func (p *BoardDescription) GetRightDiagonal(col, row int) []Cell {
-
-	return p.GetDiagonalSliceXY(col, row, endCol, endRow)
-
+	startCol, startRow, endCol, endRow := p.getBounds(col, row, Right)
+	return p.GetDiagonalSliceXY(startCol, startRow, endCol, endRow)
 }
 
 // GetLeftDiagonal returns diagonal starting at col, row till
 // the end of the board (from Right to Left)
 func (p *BoardDescription) GetLeftDiagonal(col, row int) []Cell {
-
+	startCol, startRow, endCol, endRow := p.getBounds(col, row, Left)
+	fmt.Println(startCol, startRow, endCol, endRow)
+	return p.GetDiagonalSliceXY(startCol, startRow, endCol, endRow)
 }
 
 // ToLinear converts col and row into linear address
