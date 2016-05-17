@@ -7,6 +7,11 @@ import (
 	"fmt"
 )
 
+func cmpSlices(a, b []Cell) bool {
+	for i, v := range a { if v != b[i] { return false } }
+	return true
+}
+
 func TestDiagonalSlices(t *testing.T) {
 
 	var board = NewBoard(19, 19, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
@@ -19,31 +24,32 @@ func TestDiagonalSlices(t *testing.T) {
 
 	// Test generic diagonal slice generator
 
-	result := board.GetDiagonalSliceXY(0, 0, 19, 19)
+	result1 := board.GetDiagonalSliceXY(0, 0, 19, 19)
 
-	if result != nil && len(result) == 19 {
-		if result[0] != X || result[1] != X || result[5] != X || result[18] != X {
+	if result1 != nil && len(result1) == 19 {
+		if result1[0] != X || result1[1] != X || result1[5] != X || result1[18] != X {
 			t.Fail()
 		}
-		if result[2] != EMPTY || result[3] != EMPTY || result[4] != EMPTY || result[17] != EMPTY {
+		if result1[2] != EMPTY || result1[3] != EMPTY || result1[4] != EMPTY || result1[17] != EMPTY {
 			t.Fail()
 		}
 	}
+
+	result2 := board.GetDiagonalSliceXY(0, 14, 5, 19)
+
 
 	// Test convenience slicers
 
-	result = board.GetRightDiagonal(10, 10)
-
-	if result != nil && len(result) == 19 {
-		if result[0] != X || result[1] != X || result[5] != X || result[18] != X {
-			t.Fail()
-		}
-		if result[2] != EMPTY || result[3] != EMPTY || result[4] != EMPTY || result[17] != EMPTY {
-			t.Fail()
-		}
+	newResult1 := board.GetRightDiagonal(10, 10)
+	if cmpSlices(result1, newResult1) {
+		t.Fail()
 	}
 
-	result = board.GetRightDiagonal(2, 16)
-	fmt.Println(result)
+	newResult2 := board.GetRightDiagonal(2, 16)
+	if cmpSlices(result2, newResult2) {
+		t.Fail()
+	}
+
+	fmt.Println(result2)
 
 }
