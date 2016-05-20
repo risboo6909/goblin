@@ -26,13 +26,8 @@ func TestDiagonalSlices(t *testing.T) {
 
 	result1 := board.GetDiagonalSliceXY(0, 0, 19, 19)
 
-	if result1 != nil && len(result1) == 19 {
-		if result1[0] != X || result1[1] != X || result1[5] != X || result1[18] != X {
-			t.Fail()
-		}
-		if result1[2] != EMPTY || result1[3] != EMPTY || result1[4] != EMPTY || result1[17] != EMPTY {
-			t.Fail()
-		}
+	if !cmpSlices(result1, []Cell{X, X, E, E, E, X, E, E, E, E, E, E, E, E, E, E, E, E, X}) {
+		t.Fail()
 	}
 
 	board.SetCell(0, 14, O)
@@ -43,7 +38,7 @@ func TestDiagonalSlices(t *testing.T) {
 
 	result2 := board.GetDiagonalSliceXY(0, 14, 5, 19)
 
-	if result2[0] != O || result2[1] != O || result2[2] != O || result2[3] != O || result2[4] != X {
+	if !cmpSlices(result2, []Cell{O, O, O, O, X}) {
 		t.Fail()
 	}
 
@@ -53,23 +48,40 @@ func TestDiagonalSlices(t *testing.T) {
 
 	result3 := board.GetDiagonalSliceXY(16, 0, 19, 3)
 
-	// Test Left->Right slide
+	if !cmpSlices(result3, []Cell{X, O, X}) {
+		t.Fail()
+	}
 
-	newResult1 := board.GetRightDiagonal(10, 10)
+	board.SetCell(14, 18, O)
+	board.SetCell(18, 14, O)
+
+	result4 := board.GetDiagonalSliceXY(18, 14, 15, 19)
+
+	if !cmpSlices(result4, []Cell{O, E, E, E, O}) {
+		t.Fail()
+	}
+
+
+	// Test Left->Right diagonal slicer
+
+	newResult1 := board.GetLRDiagonal(10, 10)
 	if !cmpSlices(result1, newResult1) {
 		t.Fail()
 	}
 
-	newResult2 := board.GetRightDiagonal(2, 16)
+	newResult2 := board.GetLRDiagonal(2, 16)
 	if !cmpSlices(result2, newResult2) {
 		t.Fail()
 	}
 
-	newResult3 := board.GetRightDiagonal(16, 0)
+	newResult3 := board.GetLRDiagonal(16, 0)
 	if !cmpSlices(result3, newResult3) {
 		t.Fail()
 	}
 
-	fmt.Println(result3)
+	// Test Right->Left diagonal slicer
+
+
+	fmt.Println(result1)
 
 }

@@ -74,7 +74,7 @@ func update() {
 
 			if (ev.Key == termbox.KeySpace || ev.Key == termbox.KeyEnter) && !moveBoard {
 				// can't modify occupied cell
-				if board.GetCell(cursor.Col, cursor.Row) == misc.EMPTY {
+				if board.GetCell(cursor.Col, cursor.Row) == misc.E {
 					board.SetCell(cursor.Col, cursor.Row, misc.X)
 				}
 			}
