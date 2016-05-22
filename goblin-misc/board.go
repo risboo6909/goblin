@@ -146,9 +146,8 @@ func (p *BoardDescription) GetVertSlice(col, start, end int) []Cell {
 func (p *BoardDescription) GetDiagonalSliceXY(startCol, startRow, endCol, endRow int) []Cell {
 
 	var (
-		dd = diagonalDistance(startCol, startRow, endCol-1, endRow-1)
-		tmp = make([]Cell, dd)
-		idx = 0
+		dd = diagonalDistance(startCol, startRow, endCol, endRow)
+		idx, tmp = 0, make([]Cell, dd)
 	)
 
 	if startCol < endCol && startRow < endRow {
@@ -167,20 +166,20 @@ func (p *BoardDescription) GetDiagonalSliceXY(startCol, startRow, endCol, endRow
 	return tmp
 }
 
-// getBounds returns start and end coordinates of a diagonal specified by one of its cells
+// GetBounds returns start and end coordinates of a diagonal specified by one of its cells
 // and direction
-func (p *BoardDescription) getBounds(col, row int, direction Direction) (int, int, int, int) {
+func (p *BoardDescription) GetBounds(col, row int, direction Direction) (int, int, int, int) {
 
 	if direction == RightToLeft {
-		maxDeltaUp := minIntPair(p.CellsHoriz-col, row) - 1
-		maxDeltaDown := minIntPair(col, p.CellsVert-row) - 1
+		maxDeltaUp := minIntPair(p.CellsHoriz-col-1, row)
+		maxDeltaDown := minIntPair(col, p.CellsVert-row-1)
 
 		return col + maxDeltaUp, row - maxDeltaUp,
 			col - maxDeltaDown, row + maxDeltaDown
 	}
 
 	maxDeltaUp := minIntPair(col, row)
-	maxDeltaDown := minIntPair(p.CellsHoriz-col, p.CellsVert-row)
+	maxDeltaDown := minIntPair(p.CellsHoriz-col-1, p.CellsVert-row-1)
 
 	return col - maxDeltaUp, row - maxDeltaUp,
 		col + maxDeltaDown, row + maxDeltaDown
@@ -190,14 +189,14 @@ func (p *BoardDescription) getBounds(col, row int, direction Direction) (int, in
 // GetRightDiagonal returns diagonal starting at col, row till
 // the end of the board (from Left to Right)
 func (p *BoardDescription) GetLRDiagonal(col, row int) []Cell {
-	startCol, startRow, endCol, endRow := p.getBounds(col, row, LeftToRight)
+	startCol, startRow, endCol, endRow := p.GetBounds(col, row, LeftToRight)
 	return p.GetDiagonalSliceXY(startCol, startRow, endCol, endRow)
 }
 
 // GetLeftDiagonal returns diagonal starting at col, row till
 // the end of the board (from Right to Left)
 func (p *BoardDescription) GetRLDiagonal(col, row int) []Cell {
-	startCol, startRow, endCol, endRow := p.getBounds(col, row, RightToLeft)
+	startCol, startRow, endCol, endRow := p.GetBounds(col, row, RightToLeft)
 	return p.GetDiagonalSliceXY(startCol, startRow, endCol, endRow)
 }
 
