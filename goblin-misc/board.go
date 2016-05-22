@@ -3,9 +3,8 @@ package misc
 import (
 	"errors"
 	"math"
-
+	"math/rand"
 	"github.com/nsf/termbox-go"
-	"fmt"
 )
 
 const (
@@ -23,8 +22,16 @@ type Cursor struct {
 	FgColor, BgColor termbox.Attribute
 }
 
+// Mimic python set
+type Set map[interface{}]bool
+
 // Cell structure defines possible cell state, it can be eiather X, O or EMPTY
 type Cell rune
+
+func randomCell(cellValues ...Cell) Cell {
+	idx := rand.Intn(minIntPair(len(cellValues), 3))
+	return cellValues[idx]
+}
 
 // BoardDescription defines main board properties
 type BoardDescription struct {
@@ -72,6 +79,40 @@ func NewBoard(cellsHoriz, cellsVert, x, y int, boardColor, boardBg, labelsColor,
 	}
 
 	return board
+}
+
+// GetRandomizedBoard returns a board randomly filled with Xs and Os
+// and with the given percent of empty cells
+func GetRandomizedBoard(cellsHoriz, cellsVert int, emptyPercent float64) *BoardDescription {
+
+	board := NewBoard(cellsHoriz, cellsVert, 0, 0, termbox.ColorBlack, termbox.ColorBlue,
+		termbox.ColorRed, termbox.ColorBlack)
+
+	// reserve empty cells
+	emptyCount := int(emptyPercent * float64(board.NumCells()) / 100)
+	emptyCells := make(Set)
+
+	for {
+		if len(emptyCells) > emptyCount {break}
+
+		randIdx := rand.Intn(board.NumCells())
+		if _, found := emptyCells[randIdx]; !found {
+			emptyCells[randIdx] = true
+		}
+	}
+
+	for idx := 0; idx < board.NumCells(); idx++ {
+		if _, found := emptyCells[idx]; !found {
+			board.Content[idx] = randomCell(X, O)
+		}
+	}
+
+	return board
+}
+
+// NumCells returns total number of cells
+func (p *BoardDescription) NumCells() int {
+	return p.CellsHoriz * p.CellsVert
 }
 
 // GetWidth returns the actual width of a board
@@ -126,17 +167,21 @@ func (p *BoardDescription) GetDiagonalSliceXY(startCol, startRow, endCol, endRow
 	return tmp
 }
 
+// getBounds returns start and end coordinates of a diagonal specified by one of its cells
+// and direction
 func (p *BoardDescription) getBounds(col, row int, direction Direction) (int, int, int, int) {
 
 	if direction == RightToLeft {
-		maxDeltaUp := minIntPair(p.CellsHoriz-col, row)
-		maxDeltaDown := minIntPair(col, p.CellsVert-row)
+		maxDeltaUp := minIntPair(p.CellsHoriz-col, row) - 1
+		maxDeltaDown := minIntPair(col, p.CellsVert-row) - 1
+
 		return col + maxDeltaUp, row - maxDeltaUp,
 			col - maxDeltaDown, row + maxDeltaDown
 	}
 
 	maxDeltaUp := minIntPair(col, row)
 	maxDeltaDown := minIntPair(p.CellsHoriz-col, p.CellsVert-row)
+
 	return col - maxDeltaUp, row - maxDeltaUp,
 		col + maxDeltaDown, row + maxDeltaDown
 
@@ -153,7 +198,6 @@ func (p *BoardDescription) GetLRDiagonal(col, row int) []Cell {
 // the end of the board (from Right to Left)
 func (p *BoardDescription) GetRLDiagonal(col, row int) []Cell {
 	startCol, startRow, endCol, endRow := p.getBounds(col, row, RightToLeft)
-	fmt.Println(startCol, startRow, endCol, endRow)
 	return p.GetDiagonalSliceXY(startCol, startRow, endCol, endRow)
 }
 

@@ -26,7 +26,8 @@ func TestDiagonalSlices(t *testing.T) {
 
 	result1 := board.GetDiagonalSliceXY(0, 0, 19, 19)
 
-	if !cmpSlices(result1, []Cell{X, X, E, E, E, X, E, E, E, E, E, E, E, E, E, E, E, E, X}) {
+	if !cmpSlices(result1, []Cell{X, X, E, E, E, X, E, E, E, E,
+		E, E, E, E, E, E, E, E, X}) {
 		t.Fail()
 	}
 
@@ -79,9 +80,16 @@ func TestDiagonalSlices(t *testing.T) {
 		t.Fail()
 	}
 
+
 	// Test Right->Left diagonal slicer
 
+	newResult4 := board.GetRLDiagonal(16, 16)
+	if !cmpSlices(result4, newResult4) {
+		t.Fail()
+	}
 
-	fmt.Println(result1)
+	// Randomized tests
+
+	fmt.Println(GetRandomizedBoard(5, 5, 20.0))
 
 }
