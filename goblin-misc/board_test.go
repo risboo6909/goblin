@@ -70,7 +70,6 @@ func TestDiagonalSlices(t *testing.T) {
 		t.Fail()
 	}
 
-
 	// Test Left->Right diagonal slicer
 
 	newResult1 := board.GetLRDiagonal(10, 10)

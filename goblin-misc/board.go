@@ -150,16 +150,29 @@ func (p *BoardDescription) GetDiagonalSliceXY(startCol, startRow, endCol, endRow
 		idx, tmp = 0, make([]Cell, dd)
 	)
 
+	if dd == 1 {
+		return []Cell{p.GetCell(startCol, startRow)}
+	}
+
 	if startCol < endCol && startRow < endRow {
 		for idx < dd {
 			tmp[idx] = p.GetCell(startCol, startRow)
 			idx++; startCol++; startRow++
 		}
-
 	} else if startCol > endCol && startRow < endRow {
 		for idx < dd {
 			tmp[idx] = p.GetCell(startCol, startRow)
 			idx++; startCol--; startRow++
+		}
+	} else if startCol > endCol && startRow > endRow {
+		for idx < dd {
+			tmp[idx] = p.GetCell(startCol, startRow)
+			idx++; startCol--; startRow--
+		}
+	} else if startCol < endCol && startRow > endRow {
+		for idx < dd {
+			tmp[idx] = p.GetCell(startCol, startRow)
+			idx++; startCol++; startRow--
 		}
 	}
 
@@ -206,6 +219,16 @@ func (p *BoardDescription) ToLinear(col, row int) (int, error) {
 		return row*p.CellsHoriz + col, nil
 	}
 	return -1, errors.New("Index out of bounds error")
+}
+
+// FromLinear converts linear index into pair (col, row)
+func (p *BoardDescription) FromLinear(idx int) (int, int, error) {
+	if idx >= p.CellsVert * p.CellsHoriz || idx < 0 {
+		return 0, 0, errors.New("Index out of bounds error")
+	}
+	row := idx / p.CellsHoriz
+	col := idx % p.CellsVert
+	return col, row, nil
 }
 
 // SetCell setup cell value for a give col and row
