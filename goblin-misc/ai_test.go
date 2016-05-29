@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/nsf/termbox-go"
-	"fmt"
+	"reflect"
 )
 
 
@@ -70,9 +70,17 @@ func TestFindChainDiagonal(t *testing.T) {
 
 	result = FindChain(board, 6, O)
 
-	fmt.Println(result)
-}
+	if result[0] != (Interval{2, 8, 7, 3}) {
+		t.Fail()
+	}
+	if result[1] != (Interval{0, 18, 5, 13}) {
+		t.Fail()
+	}
+	if result[2] != (Interval{13, 18, 18, 13}) {
+		t.Fail()
+	}
 
+}
 
 func TestFindChainHorizVert(t *testing.T) {
 
@@ -115,32 +123,56 @@ func TestFindChainHorizVert(t *testing.T) {
 
 	result := FindChain(board, 4, X)
 
-//	fmt.Printf("%v", result)
-
-	if result != nil && len(result) == 6 {
-
-		if result[0] != (Interval{0, 0, 3, 0}) {
-			t.Fail()
-		}
-		if result[1] != (Interval{5, 0, 8, 0}) {
-			t.Fail()
-		}
-		if result[2] != (Interval{15, 18, 18, 18}) {
-			t.Fail()
-		}
-
-		if result[3] != (Interval{0, 0, 0, 3}) {
-			t.Fail()
-		}
-		if result[4] != (Interval{5, 0, 5, 3}) {
-			t.Fail()
-		}
-		if result[5] != (Interval{18, 15, 18, 18}) {
-			t.Fail()
-		}
-
-	} else {
+	if result[0] != (Interval{0, 0, 3, 0}) {
+		t.Fail()
+	}
+	if result[1] != (Interval{5, 0, 8, 0}) {
+		t.Fail()
+	}
+	if result[2] != (Interval{15, 18, 18, 18}) {
 		t.Fail()
 	}
 
+	if result[3] != (Interval{0, 0, 0, 3}) {
+		t.Fail()
+	}
+	if result[4] != (Interval{5, 0, 5, 3}) {
+		t.Fail()
+	}
+	if result[5] != (Interval{18, 15, 18, 18}) {
+		t.Fail()
+	}
+}
+
+func TestFindAllChains(t *testing.T) {
+
+	var board = NewBoard(19, 19, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
+		termbox.ColorRed, termbox.ColorBlack)
+
+	board.SetCell(5, 0, X)
+	board.SetCell(6, 0, X)
+	board.SetCell(7, 0, X)
+	board.SetCell(8, 0, X)
+
+	board.SetCell(6, 10, X)
+	board.SetCell(5, 11, X)
+	board.SetCell(4, 12, X)
+	board.SetCell(3, 13, X)
+	board.SetCell(2, 14, X)
+
+	board.SetCell(0, 18, X)
+	board.SetCell(1, 18, X)
+	board.SetCell(2, 18, X)
+
+	board.SetCell(16, 0, X)
+	board.SetCell(17, 0, X)
+	board.SetCell(18, 0, X)
+
+	result := FindAllChains(board, 3, 5, X)
+
+	if !reflect.DeepEqual(result, map[int][]Interval {
+		3:[]Interval{Interval{16,0,18,0}, Interval{0,18,2,18}},
+		4:[]Interval{Interval{5,0,8,0}}, 5:[]Interval{Interval{2,14,6,10}}}) {
+		t.Fail()
+	}
 }

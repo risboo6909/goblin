@@ -16,7 +16,7 @@ const (
 )
 
 func reverseSlice(slice []Cell) []Cell {
-	for i, j := 0, len(slice)-1; i < j; i, j = i+1, j-1 {
+	for i, j := 0, len(slice) - 1; i < j; i, j = i + 1, j - 1 {
 		slice[i], slice[j] = slice[j], slice[i]
 	}
 	return slice
@@ -26,15 +26,35 @@ func reverseSlice(slice []Cell) []Cell {
 // length of desired sequence, type of cell (X, O or E) and a scan direction
 func scanLine(line []Cell, col, row, chainLen int, player Cell, direction ScanDirection) []Interval {
 
+	// convenience functions
+	pred_match := func (idx int, cell, player Cell) bool {
+		return player == cell && idx < len(line) - 1
+	}
+
+	pred_nomatch := func (idx int, cell, player Cell) bool {
+		return player == cell && idx == len(line) - 1
+	}
+
 	var (
 		result  []Interval
 		counter = 0
 	)
 
 	for idx, cell := range line {
-		if player == cell {
-			if counter++; counter == chainLen {
 
+		if pred_match(idx, cell, player) {
+
+			counter++
+
+		} else {
+
+			if pred_nomatch(idx, cell, player) {
+				counter++
+			} else {
+				idx--
+			}
+
+			if counter == chainLen {
 				if direction == horizontal {
 					result = append(result, Interval{idx - chainLen + 1, row, idx, row})
 
@@ -49,9 +69,7 @@ func scanLine(line []Cell, col, row, chainLen int, player Cell, direction ScanDi
 					result = append(result, Interval{col + idx - chainLen + 1, row - idx + chainLen - 1,
 						col + idx, row - idx})
 				}
-
 			}
-		} else {
 			counter = 0
 		}
 	}
@@ -104,7 +122,7 @@ func FindChain(board *BoardDescription, chainLen int, player Cell) []Interval {
 		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
 	}
 
-	for i := 0; i < board.CellsHoriz; i++ {
+	for i := 1; i < board.CellsHoriz; i++ {
 		tmp := scanLine(reverseSlice(board.GetRLDiagonal(i, board.CellsVert - 1)), i,
 			board.CellsVert - 1, chainLen, player, RLDiagonal)
 		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
@@ -124,6 +142,10 @@ func FindChain(board *BoardDescription, chainLen int, player Cell) []Interval {
 }
 
 // FindAllChains finds all the chains of length in interval [chainLenMin..chainLenMax]
-func FindAllChains(board *BoardDescription, chainLenMin, chainLenMax int, player rune) {
-
+func FindAllChains(board *BoardDescription, chainLenMin, chainLenMax int, player Cell) map[int][]Interval {
+	result := make(map[int][]Interval)
+	for chainLen := chainLenMin; chainLen <= chainLenMax; chainLen++ {
+		result[chainLen] = FindChain(board, chainLen, player)
+	}
+	return result
 }
