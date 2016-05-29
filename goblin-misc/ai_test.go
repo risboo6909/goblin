@@ -10,8 +10,7 @@ import (
 
 func TestFindChainDiagonal(t *testing.T) {
 
-	var board = NewBoard(19, 19, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
-		termbox.ColorRed, termbox.ColorBlack)
+	var board = NewBoard(19, 19)
 
 	// Left-to-right diagonal sequences
 
@@ -84,8 +83,7 @@ func TestFindChainDiagonal(t *testing.T) {
 
 func TestFindChainHorizVert(t *testing.T) {
 
-	var board = NewBoard(19, 19, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
-		termbox.ColorRed, termbox.ColorBlack)
+	var board = NewBoard(19, 19)
 
 	// horizontal
 
@@ -146,8 +144,7 @@ func TestFindChainHorizVert(t *testing.T) {
 
 func TestFindAllChains(t *testing.T) {
 
-	var board = NewBoard(19, 19, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
-		termbox.ColorRed, termbox.ColorBlack)
+	var board = NewBoard(19, 19)
 
 	board.SetCell(5, 0, X)
 	board.SetCell(6, 0, X)

@@ -7,6 +7,34 @@ import (
 	"github.com/risboo6909/goblin/goblin-misc"
 )
 
+// Board visual attributes
+type BoardAttrs struct {
+	BoardColor, BoardBg   termbox.Attribute
+	LabelsColor, LabelsBg termbox.Attribute
+}
+
+// Cursor represents board cursor position
+type Cursor struct {
+	Col, Row         int
+	FgColor, BgColor termbox.Attribute
+}
+
+type DrawableBoard struct {
+	*misc.BoardDescription
+
+	// upper-left corner position of a board
+	X, Y int
+
+	BoardAttrs
+}
+
+func NewBoard(cellsHoriz, cellsVert, x, y int, boardColor, boardBg, labelsColor,
+	labelsBg termbox.Attribute) *DrawableBoard {
+	return &DrawableBoard{misc.NewBoard(cellsHoriz, cellsVert),
+		              x, y,
+		              BoardAttrs{boardColor, boardBg, labelsColor, labelsBg}}
+}
+
 func modN(n float64) func(int) float64 {
 	return func(m int) float64 {
 		return math.Mod(float64(m), n)
@@ -16,11 +44,11 @@ func modN(n float64) func(int) float64 {
 var mod4 = modN(4)
 var mod2 = modN(2)
 
-func getScrX(board *misc.BoardDescription, col int) int {
+func getScrX(board *DrawableBoard, col int) int {
 	return board.X + 2 + col*4
 }
 
-func getScrY(board *misc.BoardDescription, row int) int {
+func getScrY(board *DrawableBoard, row int) int {
 	return board.Y + 1 + row*2
 }
 
@@ -45,7 +73,7 @@ func drawVertLine(color, bgcolor termbox.Attribute, x, y, height int, s rune) {
 }
 
 // drawTopAndBottom draws upper or lower parts of a board
-func drawTopAndBottom(x, y int, p *misc.BoardDescription, left, middle, right rune, labels bool) {
+func drawTopAndBottom(x, y int, p *DrawableBoard, left, middle, right rune, labels bool) {
 
 	if labels {
 
@@ -88,7 +116,7 @@ func drawTopAndBottom(x, y int, p *misc.BoardDescription, left, middle, right ru
 }
 
 // drawLeftAndRight draws left and right parts of a board
-func drawLeftAndRight(x, y int, p *misc.BoardDescription, middle rune, labels bool) {
+func drawLeftAndRight(x, y int, p *DrawableBoard, middle rune, labels bool) {
 
 	if labels {
 
@@ -122,7 +150,7 @@ func drawLeftAndRight(x, y int, p *misc.BoardDescription, middle rune, labels bo
 
 }
 
-func fillBoard(board *misc.BoardDescription) {
+func fillBoard(board *DrawableBoard) {
 	for i := 0; i < board.CellsHoriz; i++ {
 		for j := 0; j < board.CellsVert; j++ {
 
@@ -140,14 +168,14 @@ func fillBoard(board *misc.BoardDescription) {
 	}
 }
 
-func drawCursor(board *misc.BoardDescription, cursor *misc.Cursor) {
+func drawCursor(board *DrawableBoard, cursor *Cursor) {
 	val := board.GetCell(cursor.Col, cursor.Row)
 	termbox.SetCell(getScrX(board, cursor.Col), getScrY(board, cursor.Row),
 		rune(val), cursor.FgColor, cursor.BgColor)
 }
 
 // DrawBoard draws ASCII game board
-func DrawBoard(board *misc.BoardDescription, cursor *misc.Cursor) {
+func DrawBoard(board *DrawableBoard, cursor *Cursor) {
 
 	x := board.X + 2
 	y := board.Y + 1

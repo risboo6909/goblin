@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math"
 	"math/rand"
-	"github.com/nsf/termbox-go"
 )
 
 const (
@@ -16,11 +15,6 @@ const (
 	E = ' '
 )
 
-// Cursor represents board cursor position
-type Cursor struct {
-	Col, Row         int
-	FgColor, BgColor termbox.Attribute
-}
 
 // Mimic python set
 type Set map[interface{}]bool
@@ -35,14 +29,10 @@ func randomCell(cellValues ...Cell) Cell {
 
 // BoardDescription defines main board properties
 type BoardDescription struct {
+
+	// number of horizontal and vertical cells
 	CellsHoriz int
 	CellsVert  int
-
-	// upper-left corner position
-	X, Y int
-
-	BoardColor, BoardBg   termbox.Attribute
-	LabelsColor, LabelsBg termbox.Attribute
 
 	// board state
 	Content []Cell
@@ -67,11 +57,9 @@ func minIntPair(a, b int) int {
 
 // NewBoard creates a new struct of type BoardDescription with allocated
 // slice for a board contents
-func NewBoard(cellsHoriz, cellsVert, x, y int, boardColor, boardBg, labelsColor,
-	labelsBg termbox.Attribute) *BoardDescription {
+func NewBoard(cellsHoriz, cellsVert int) *BoardDescription {
 
-	board := &BoardDescription{cellsHoriz, cellsVert, x, y, boardColor, boardBg,
-		labelsColor, labelsBg, make([]Cell, cellsHoriz*cellsVert)}
+	board := &BoardDescription{cellsHoriz, cellsVert, make([]Cell, cellsHoriz*cellsVert)}
 
 	// fill default EMPTY cells
 	for i := range board.Content {
@@ -85,8 +73,7 @@ func NewBoard(cellsHoriz, cellsVert, x, y int, boardColor, boardBg, labelsColor,
 // and with the given percent of empty cells
 func GetRandomizedBoard(cellsHoriz, cellsVert int, emptyPercent float64) *BoardDescription {
 
-	board := NewBoard(cellsHoriz, cellsVert, 0, 0, termbox.ColorBlack, termbox.ColorBlue,
-		termbox.ColorRed, termbox.ColorBlack)
+	board := NewBoard(cellsHoriz, cellsVert)
 
 	// reserve empty cells
 	emptyCount := int(emptyPercent * float64(board.NumCells()) / 100)

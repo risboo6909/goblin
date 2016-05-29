@@ -3,7 +3,6 @@ package misc
 import (
 	"testing"
 
-	"github.com/nsf/termbox-go"
 	"math/rand"
 )
 
@@ -15,8 +14,7 @@ func cmpSlices(a, b []Cell) bool {
 
 func TestDiagonalSlices(t *testing.T) {
 
-	var board = NewBoard(19, 19, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
-		termbox.ColorRed, termbox.ColorBlack)
+	var board = NewBoard(19, 19)
 
 	board.SetCell(0, 0, X)
 	board.SetCell(1, 1, X)

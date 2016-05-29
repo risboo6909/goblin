@@ -26,6 +26,12 @@ func reverseSlice(slice []Cell) []Cell {
 // length of desired sequence, type of cell (X, O or E) and a scan direction
 func scanLine(line []Cell, col, row, chainLen int, player Cell, direction ScanDirection) []Interval {
 
+
+	var (
+		result  []Interval
+		counter = 0
+	)
+
 	// convenience functions
 	pred_match := func (idx int, cell, player Cell) bool {
 		return player == cell && idx < len(line) - 1
@@ -34,11 +40,6 @@ func scanLine(line []Cell, col, row, chainLen int, player Cell, direction ScanDi
 	pred_nomatch := func (idx int, cell, player Cell) bool {
 		return player == cell && idx == len(line) - 1
 	}
-
-	var (
-		result  []Interval
-		counter = 0
-	)
 
 	for idx, cell := range line {
 
@@ -148,4 +149,10 @@ func FindAllChains(board *BoardDescription, chainLenMin, chainLenMax int, player
 		result[chainLen] = FindChain(board, chainLen, player)
 	}
 	return result
+}
+
+// MonteCarloEval uses Monte-Carlo method to asess current position, intended
+// to be used as static evaluator for leaf nodes
+func MonteCarloEval(board *BoardDescription, maxMoves int) {
+
 }
