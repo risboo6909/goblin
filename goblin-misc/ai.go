@@ -1,5 +1,10 @@
 package misc
 
+import (
+	"math/rand"
+)
+
+
 // Interval represents indexes of start and end of an n-length chain`
 type Interval struct {
 	col1, row1 int
@@ -20,6 +25,15 @@ func reverseSlice(slice []Cell) []Cell {
 		slice[i], slice[j] = slice[j], slice[i]
 	}
 	return slice
+}
+
+
+// ShuffleSlice shuffles a slice of cells and shuffles it in-place
+func ShuffleSlice(slice []Cell)  {
+	for i := 0; i < len(slice) - 1; i++ {
+		idx := i + 1 + rand.Intn(len(slice) - i - 1)
+		slice[i], slice[idx] = slice[idx], slice[i]
+	}
 }
 
 // scanLine accept a slice (horizontal, vertical or diagonal), col and row are coordinates of a sequence start
@@ -151,8 +165,12 @@ func FindAllChains(board *BoardDescription, chainLenMin, chainLenMax int, player
 	return result
 }
 
+
 // MonteCarloEval uses Monte-Carlo method to asess current position, intended
 // to be used as static evaluator for leaf nodes
 func MonteCarloEval(board *BoardDescription, maxMoves int) {
 
+	for i := 0; i < maxMoves; i++ {
+
+	}
 }

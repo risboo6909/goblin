@@ -3,7 +3,6 @@ package misc
 import (
 	"testing"
 
-	"github.com/nsf/termbox-go"
 	"reflect"
 )
 
@@ -43,8 +42,7 @@ func TestFindChainDiagonal(t *testing.T) {
 
 	// Right-to-left diagonal sequences
 
-	board = NewBoard(19, 19, 10, 10, termbox.ColorBlack, termbox.ColorBlue,
-		termbox.ColorRed, termbox.ColorBlack)
+	board = NewBoard(19, 19)
 
 	board.SetCell(13, 18, O)
 	board.SetCell(14, 17, O)
@@ -172,4 +170,38 @@ func TestFindAllChains(t *testing.T) {
 		4:[]Interval{Interval{5,0,8,0}}, 5:[]Interval{Interval{2,14,6,10}}}) {
 		t.Fail()
 	}
+}
+
+func TestShuffleSlice(t *testing.T) {
+
+	inp := []Cell{1,2,3,4,5,6,7,8}
+
+	ShuffleSlice(inp)
+
+	if !cmpSlices(inp, []Cell{8,6,2,1,7,5,4,3}) {
+		t.Fail()
+	}
+
+	inp = []Cell{1,2,3,4,5,6,7,8}
+
+	ShuffleSlice(inp)
+
+	if !cmpSlices(inp, []Cell{7,1,4,2,3,5,8,6}) {
+		t.Fail()
+	}
+
+	inp = []Cell{}
+
+	ShuffleSlice(inp)
+
+	if !cmpSlices(inp, []Cell{}) {
+		t.Fail()
+	}
+
+}
+
+func TestMonteCarloEval(t *testing.T) {
+	var board = NewBoard(19, 19)
+
+	MonteCarloEval(board, 19*19)
 }
