@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"reflect"
-	"fmt"
 )
 
 
@@ -31,13 +30,13 @@ func TestFindChainDiagonal(t *testing.T) {
 
 	result := FindChain(board, 4, X)
 
-	if result[0] != (Interval{2, 2, 5, 5}) {
+	if result[0] != (Interval{LRDiagonal, 2, 2, 5, 5}) {
 		t.Fail()
 	}
-	if result[1] != (Interval{7, 3, 10, 6}) {
+	if result[1] != (Interval{LRDiagonal, 7, 3, 10, 6}) {
 		t.Fail()
 	}
-	if result[2] != (Interval{0, 15, 3, 18}) {
+	if result[2] != (Interval{LRDiagonal, 0, 15, 3, 18}) {
 		t.Fail()
 	}
 
@@ -68,13 +67,13 @@ func TestFindChainDiagonal(t *testing.T) {
 
 	result = FindChain(board, 6, O)
 
-	if result[0] != (Interval{2, 8, 7, 3}) {
+	if result[0] != (Interval{RLDiagonal, 2, 8, 7, 3}) {
 		t.Fail()
 	}
-	if result[1] != (Interval{0, 18, 5, 13}) {
+	if result[1] != (Interval{RLDiagonal, 0, 18, 5, 13}) {
 		t.Fail()
 	}
-	if result[2] != (Interval{13, 18, 18, 13}) {
+	if result[2] != (Interval{RLDiagonal, 13, 18, 18, 13}) {
 		t.Fail()
 	}
 
@@ -120,23 +119,23 @@ func TestFindChainHorizVert(t *testing.T) {
 
 	result := FindChain(board, 4, X)
 
-	if result[0] != (Interval{0, 0, 3, 0}) {
+	if result[0] != (Interval{horizontal, 0, 0, 3, 0}) {
 		t.Fail()
 	}
-	if result[1] != (Interval{5, 0, 8, 0}) {
+	if result[1] != (Interval{horizontal, 5, 0, 8, 0}) {
 		t.Fail()
 	}
-	if result[2] != (Interval{15, 18, 18, 18}) {
+	if result[2] != (Interval{horizontal, 15, 18, 18, 18}) {
 		t.Fail()
 	}
 
-	if result[3] != (Interval{0, 0, 0, 3}) {
+	if result[3] != (Interval{vertical, 0, 0, 0, 3}) {
 		t.Fail()
 	}
-	if result[4] != (Interval{5, 0, 5, 3}) {
+	if result[4] != (Interval{vertical, 5, 0, 5, 3}) {
 		t.Fail()
 	}
-	if result[5] != (Interval{18, 15, 18, 18}) {
+	if result[5] != (Interval{vertical, 18, 15, 18, 18}) {
 		t.Fail()
 	}
 }
@@ -167,8 +166,8 @@ func TestFindAllChains(t *testing.T) {
 	result := FindAllChains(board, 2, 5, X)
 
 	if !reflect.DeepEqual(result, map[int][]Interval {
-		3:[]Interval{Interval{16,0,18,0}, Interval{0,18,2,18}},
-		4:[]Interval{Interval{5,0,8,0}}, 5:[]Interval{Interval{2,14,6,10}}}) {
+		3:[]Interval{Interval{horizontal, 16,0,18,0}, Interval{horizontal, 0,18,2,18}},
+		4:[]Interval{Interval{horizontal, 5,0,8,0}}, 5:[]Interval{Interval{RLDiagonal, 2,14,6,10}}}) {
 		t.Fail()
 	}
 
@@ -210,8 +209,36 @@ func TestShuffleIntSlice(t *testing.T) {
 
 }
 
-func TestMonteCarloEval(t *testing.T) {
-	var board = NewBoard(19, 19)
+func TestMakeSearchPatterns(t *testing.T) {
 
-	fmt.Println(MonteCarloEval(board, 10, 19*19, X, X))
+	result := MakeSearchPatterns(5, X)
+
+	if !cmpSlices(result[0], []Cell{88, 88, 88, 88, 88}) {
+		t.Fail()
+	}
+
+	if !cmpSlices(result[1], []Cell{32, 88, 88, 88, 88}) {
+		t.Fail()
+	}
+
+	if !cmpSlices(result[2], []Cell{88, 88, 88, 88, 32}) {
+		t.Fail()
+	}
+
+	if !cmpSlices(result[3], []Cell{32, 32, 88, 88, 88, 32, 32}) {
+		t.Fail()
+	}
+
 }
+
+//func TestMonteCarloEval(t *testing.T) {
+//
+//	var board = NewBoard(5, 5)
+//
+//	board.SetCell(1, 1, X)
+//	board.SetCell(2, 2, X)
+//	board.SetCell(3, 3, X)
+//	//board.SetCell(3, 3, O)
+//
+//	fmt.Println(MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5, maxDepth: 10}, 10, 19*19, O))
+//}

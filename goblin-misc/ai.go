@@ -6,16 +6,35 @@ import (
 
 // Interval represents indexes of start and end of an n-length chain`
 type Interval struct {
+
+	direction int
+
 	col1, row1 int
 	col2, row2 int
 }
 
 type ScanDirection uint8
 
+type AIOptions struct {
+
+	AIPlayer Cell
+
+	winSequenceLength int
+
+	maxDepth int
+
+}
+
 const (
 	horizontal = iota
 	vertical
+
+	// LR means that we are scanning from the left side of the board
+	// towards its right side
 	LRDiagonal
+
+	// RL means that we are scanning from the right side of the board
+	// towards its left side
 	RLDiagonal
 )
 
@@ -60,18 +79,18 @@ func scanLine(line []Cell, col, row, chainLen int, player Cell, direction ScanDi
 
 			if counter == chainLen {
 				if direction == horizontal {
-					result = append(result, Interval{idx - chainLen + 1, row, idx, row})
+					result = append(result, Interval{horizontal, idx - chainLen + 1, row, idx, row})
 
 				} else if direction == vertical {
-					result = append(result, Interval{col, idx - chainLen + 1, col, idx})
+					result = append(result, Interval{vertical, col, idx - chainLen + 1, col, idx})
 
 				} else if direction == LRDiagonal {
-					result = append(result, Interval{col + idx - chainLen + 1, row + idx - chainLen + 1,
-						col + idx, row + idx})
+					result = append(result, Interval{LRDiagonal, col + idx - chainLen + 1,
+						row + idx - chainLen + 1, col + idx, row + idx})
 
 				} else if direction == RLDiagonal {
-					result = append(result, Interval{col + idx - chainLen + 1, row - idx + chainLen - 1,
-						col + idx, row - idx})
+					result = append(result, Interval{RLDiagonal, col + idx - chainLen + 1,
+						row - idx + chainLen - 1, col + idx, row - idx})
 				}
 			}
 			counter = 0
@@ -79,6 +98,43 @@ func scanLine(line []Cell, col, row, chainLen int, player Cell, direction ScanDi
 	}
 
 	return result
+}
+
+// MakeSearchPatterns generates winning patterns of
+// specified length to search on a board
+func MakeSearchPatterns(targetLen int, p Cell) [][]Cell {
+	winningPatterns := [][]Cell{}
+
+	// test all in a row
+	winningPatterns = append(winningPatterns, make([]Cell, targetLen))
+
+	// test all minus 1 in a row
+	winningPatterns = append(winningPatterns, make([]Cell, targetLen - 1 + 1))
+	winningPatterns = append(winningPatterns, make([]Cell, targetLen - 1 + 1))
+
+	// test all minus 2 in a row
+	winningPatterns = append(winningPatterns, make([]Cell, targetLen - 2 + 4))
+
+	for idx := 0; idx < targetLen - 1 + 1; idx++ {
+		winningPatterns[0][idx] = p
+		winningPatterns[1][idx] = p
+		winningPatterns[2][idx] = p
+	}
+
+	winningPatterns[1][0] = E
+	winningPatterns[2][targetLen - 1] = E
+
+	for idx := 0; idx < targetLen - 2 + 4; idx++ {
+		winningPatterns[3][idx] = p
+	}
+
+	l := len(winningPatterns[3])
+	winningPatterns[3][0] = E
+	winningPatterns[3][1] = E
+	winningPatterns[3][l - 1] = E
+	winningPatterns[3][l - 2] = E
+
+	return winningPatterns
 }
 
 // FindChain finds vertical, horizontal or diagonal chains of
@@ -173,9 +229,37 @@ func SwitchPlayer(player Cell) Cell {
 	return X
 }
 
+// TestWin determines whether requested player guaranteed to win the game from
+// the current board position (very useful for quick position evaluation
+// without performing thorough analysis)
+//func TestWin(board *BoardDescription, options AIOptions, player Cell) (bool, Interval) {
+//
+//	MAYBE_WIN := options.winSequenceLength - 2
+//	WILL_WIN := options.winSequenceLength - 1
+//
+//	for k, v := range FindAllChains(board, MAYBE_WIN, WILL_WIN, player) {
+//
+//		if k == MAYBE_WIN {
+//			// we have to ensure that the given position will lead to win 100% of
+//			// all the cases
+//			for _, interval := range v {
+//				stCol, stRow := interval.col1, interval.row1
+//				endCol, endRow := interval.col2, interval.row2
+//			}
+//
+//		} else if k == WILL_WIN {
+//			// given player will 100% win next move from this position
+//			return true, v
+//		}
+//	}
+//
+//	return false, Interval{}
+//
+//}
+
 // MonteCarloEval uses Monte-Carlo method to assess current position, intended
 // to be used as static evaluator for leaf nodes
-func MonteCarloEval(board *BoardDescription, trials, maxMoves int, whoMoves, AIPlayer Cell) float64 {
+func MonteCarloEval(board *BoardDescription, options AIOptions, trials, maxMoves int, whoMoves Cell) float64 {
 
 	var (
 		cellIdx int
@@ -198,12 +282,12 @@ func MonteCarloEval(board *BoardDescription, trials, maxMoves int, whoMoves, AIP
 
 				clonedBoard.SetCell(col, row, whoMoves)
 
-				// check whether we have obvious winning position -
-				// 3 in a row or 4 in a row
-				results := FindAllChains(clonedBoard, 3, 4, whoMoves)
+				// check whether we have guaranteed winning position
+				results := FindAllChains(clonedBoard, options.winSequenceLength - 1,
+					options.winSequenceLength, whoMoves)
 
 				if len(results) != 0 {
-					if whoMoves == AIPlayer {
+					if whoMoves == options.AIPlayer {
 						// computer will win in next move(s)
 						ai_wins++
 						break
@@ -227,4 +311,9 @@ func MonteCarloEval(board *BoardDescription, trials, maxMoves int, whoMoves, AIP
 	wining_prob := float64(ai_wins) / (float64(ai_wins) + float64(player_wins))
 
 	return wining_prob
+}
+
+// Function to choose the best move from a given position
+func MakeMove(board *BoardDescription, options AIOptions) {
+
 }
