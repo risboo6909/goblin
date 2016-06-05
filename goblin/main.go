@@ -12,10 +12,11 @@ var (
 	gameState = StateGameplay
 	moveBoard = false
 
-	board = ui.NewBoard(19, 19, 0, 0, termbox.ColorBlack, termbox.ColorBlue,
+	board = ui.NewBoard(3, 3, 0, 0, termbox.ColorBlack, termbox.ColorBlue,
 		termbox.ColorRed, termbox.ColorBlack)
 
-	cursor = &ui.Cursor{Col: 2, Row: 1, FgColor: termbox.ColorGreen, BgColor: termbox.ColorWhite}
+	cursor = &ui.Cursor{Board: board, Col: 2, Row: 1,
+		FgColor: termbox.ColorGreen, BgColor: termbox.ColorWhite}
 )
 
 func update() {
@@ -43,7 +44,7 @@ func update() {
 				if moveBoard {
 					board.X++
 				} else {
-					cursor.Col++
+					cursor.MoveRight()
 				}
 			}
 
@@ -51,7 +52,7 @@ func update() {
 				if moveBoard {
 					board.X--
 				} else {
-					cursor.Col--
+					cursor.MoveLeft()
 				}
 			}
 
@@ -59,7 +60,7 @@ func update() {
 				if moveBoard {
 					board.Y--
 				} else {
-					cursor.Row--
+					cursor.MoveUp()
 				}
 			}
 
@@ -67,7 +68,7 @@ func update() {
 				if moveBoard {
 					board.Y++
 				} else {
-					cursor.Row++
+					cursor.MoveDown()
 				}
 			}
 

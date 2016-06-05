@@ -13,13 +13,8 @@ type BoardAttrs struct {
 	LabelsColor, LabelsBg termbox.Attribute
 }
 
-// Cursor represents board cursor position
-type Cursor struct {
-	Col, Row         int
-	FgColor, BgColor termbox.Attribute
-}
-
 type DrawableBoard struct {
+
 	*misc.BoardDescription
 
 	// upper-left corner position of a board
