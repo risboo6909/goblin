@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"reflect"
+	"fmt"
 )
 
 
@@ -163,38 +164,47 @@ func TestFindAllChains(t *testing.T) {
 	board.SetCell(17, 0, X)
 	board.SetCell(18, 0, X)
 
-	result := FindAllChains(board, 3, 5, X)
+	result := FindAllChains(board, 2, 5, X)
 
 	if !reflect.DeepEqual(result, map[int][]Interval {
 		3:[]Interval{Interval{16,0,18,0}, Interval{0,18,2,18}},
 		4:[]Interval{Interval{5,0,8,0}}, 5:[]Interval{Interval{2,14,6,10}}}) {
 		t.Fail()
 	}
+
+	board = NewBoard(19, 19)
+
+	result = FindAllChains(board, 3, 4, O)
+
+	// return empty map if nothing has been found
+	if len(result) > 0 {
+		t.Fail()
+	}
 }
 
-func TestShuffleSlice(t *testing.T) {
+func TestShuffleIntSlice(t *testing.T) {
 
-	inp := []Cell{1,2,3,4,5,6,7,8}
+	inp := []int{1,2,3,4,5,6,7,8}
 
-	ShuffleSlice(inp)
+	ShuffleIntSlice(inp)
 
-	if !cmpSlices(inp, []Cell{8,6,2,1,7,5,4,3}) {
+	if !cmpSlices(inp, []int{8,6,2,1,7,5,4,3}) {
 		t.Fail()
 	}
 
-	inp = []Cell{1,2,3,4,5,6,7,8}
+	inp = []int{1,2,3,4,5,6,7,8}
 
-	ShuffleSlice(inp)
+	ShuffleIntSlice(inp)
 
-	if !cmpSlices(inp, []Cell{7,1,4,2,3,5,8,6}) {
+	if !cmpSlices(inp, []int{7,1,4,2,3,5,8,6}) {
 		t.Fail()
 	}
 
-	inp = []Cell{}
+	inp = []int{}
 
-	ShuffleSlice(inp)
+	ShuffleIntSlice(inp)
 
-	if !cmpSlices(inp, []Cell{}) {
+	if !cmpSlices(inp, []int{}) {
 		t.Fail()
 	}
 
@@ -203,5 +213,5 @@ func TestShuffleSlice(t *testing.T) {
 func TestMonteCarloEval(t *testing.T) {
 	var board = NewBoard(19, 19)
 
-	MonteCarloEval(board, 19*19)
+	fmt.Println(MonteCarloEval(board, 10, 19*19, X, X))
 }

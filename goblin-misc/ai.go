@@ -4,7 +4,6 @@ import (
 	"math/rand"
 )
 
-
 // Interval represents indexes of start and end of an n-length chain`
 type Interval struct {
 	col1, row1 int
@@ -20,21 +19,11 @@ const (
 	RLDiagonal
 )
 
-func reverseSlice(slice []Cell) []Cell {
-	for i, j := 0, len(slice) - 1; i < j; i, j = i + 1, j - 1 {
-		slice[i], slice[j] = slice[j], slice[i]
-	}
-	return slice
-}
-
-
-// ShuffleSlice shuffles a slice of cells and shuffles it in-place
-func ShuffleSlice(slice []Cell)  {
-	for i := 0; i < len(slice) - 1; i++ {
-		idx := i + 1 + rand.Intn(len(slice) - i - 1)
-		slice[i], slice[idx] = slice[idx], slice[i]
-	}
-}
+const (
+	AI_WINS = 10
+	AI_LOSES = -10
+	DRAW = 0
+)
 
 // scanLine accept a slice (horizontal, vertical or diagonal), col and row are coordinates of a sequence start
 // length of desired sequence, type of cell (X, O or E) and a scan direction
@@ -133,12 +122,12 @@ func FindChain(board *BoardDescription, chainLen int, player Cell) []Interval {
 	// and finally diagonal
 
 	for i := 0; i < board.CellsVert; i++ {
-		tmp := scanLine(reverseSlice(board.GetRLDiagonal(0, i)), 0, i, chainLen, player, RLDiagonal)
+		tmp := scanLine(ReverseCellsSlice(board.GetRLDiagonal(0, i)), 0, i, chainLen, player, RLDiagonal)
 		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
 	}
 
 	for i := 1; i < board.CellsHoriz; i++ {
-		tmp := scanLine(reverseSlice(board.GetRLDiagonal(i, board.CellsVert - 1)), i,
+		tmp := scanLine(ReverseCellsSlice(board.GetRLDiagonal(i, board.CellsVert - 1)), i,
 			board.CellsVert - 1, chainLen, player, RLDiagonal)
 		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
 	}
@@ -160,17 +149,82 @@ func FindChain(board *BoardDescription, chainLen int, player Cell) []Interval {
 func FindAllChains(board *BoardDescription, chainLenMin, chainLenMax int, player Cell) map[int][]Interval {
 	result := make(map[int][]Interval)
 	for chainLen := chainLenMin; chainLen <= chainLenMax; chainLen++ {
-		result[chainLen] = FindChain(board, chainLen, player)
+		tmp := FindChain(board, chainLen, player)
+		if len(tmp) != 0 {
+			result[chainLen] = tmp
+		}
 	}
 	return result
 }
 
+// ShuffleIntSlice shuffles a slice of ints in-place
+func ShuffleIntSlice(slice []int) []int {
+	for i := 0; i < len(slice) - 1; i++ {
+		idx := i + 1 + rand.Intn(len(slice) - i - 1)
+		slice[i], slice[idx] = slice[idx], slice[i]
+	}
+	return slice
+}
 
-// MonteCarloEval uses Monte-Carlo method to asess current position, intended
+func SwitchPlayer(player Cell) Cell {
+	if player == X {
+		return O
+	}
+	return X
+}
+
+// MonteCarloEval uses Monte-Carlo method to assess current position, intended
 // to be used as static evaluator for leaf nodes
-func MonteCarloEval(board *BoardDescription, maxMoves int) {
+func MonteCarloEval(board *BoardDescription, trials, maxMoves int, whoMoves, AIPlayer Cell) float64 {
 
-	for i := 0; i < maxMoves; i++ {
+	var (
+		cellIdx int
+		ai_wins, player_wins int
+	)
+
+	maxMoves = maxIntPair(board.NumCells(), maxMoves)
+
+	for trial := 0; trial < trials; trial++ {
+
+		clonedBoard := CloneBoard(board)
+		free := ShuffleIntSlice(board.GetFreeIndices())
+
+		for i := 0; i < maxMoves; i++ {
+
+			cellIdx = free[0]
+			col, row, err := clonedBoard.FromLinear(cellIdx)
+
+			if err == nil {
+
+				clonedBoard.SetCell(col, row, whoMoves)
+
+				// check whether we have obvious winning position -
+				// 3 in a row or 4 in a row
+				results := FindAllChains(clonedBoard, 3, 4, whoMoves)
+
+				if len(results) != 0 {
+					if whoMoves == AIPlayer {
+						// computer will win in next move(s)
+						ai_wins++
+						break
+					} else {
+						// opponent will win in next move(s)
+						player_wins++
+						break
+					}
+				}
+
+				free = free[1:]
+				whoMoves = SwitchPlayer(whoMoves)
+
+			} else {
+				panic("Index out of bounds in method MonteCarlEval")
+			}
+		}
 
 	}
+
+	wining_prob := float64(ai_wins) / (float64(ai_wins) + float64(player_wins))
+
+	return wining_prob
 }

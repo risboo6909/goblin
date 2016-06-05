@@ -51,8 +51,12 @@ func diagonalDistance(startCol, startRow, endCol, endRow int) int {
 	return diagonalDistance
 }
 
-func minIntPair(a, b int) int {
-	return int(math.Min(float64(a), float64(b)))
+// ReverseCellsSlice reverses a slice of board cells in-place
+func ReverseCellsSlice(slice []Cell) []Cell {
+	for i, j := 0, len(slice) - 1; i < j; i, j = i + 1, j - 1 {
+		slice[i], slice[j] = slice[j], slice[i]
+	}
+	return slice
 }
 
 // NewBoard creates a new struct of type BoardDescription with allocated
@@ -67,6 +71,15 @@ func NewBoard(cellsHoriz, cellsVert int) *BoardDescription {
 	}
 
 	return board
+}
+
+// CloneBoard clones an existing board
+func CloneBoard(p *BoardDescription) *BoardDescription {
+	newBoard := NewBoard(p.CellsHoriz, p.CellsVert)
+	for i, v := range(p.Content) {
+		newBoard.Content[i] = v
+	}
+	return newBoard
 }
 
 // GetRandomizedBoard returns a board randomly filled with Xs and Os
@@ -233,4 +246,17 @@ func (p *BoardDescription) GetCell(col, row int) Cell {
 		return p.Content[idx]
 	}
 	panic(err)
+}
+
+// GetFreeIndices returns indices of free board cells
+func (p *BoardDescription) GetFreeIndices() []int {
+
+	var result []int
+
+	for i, v := range p.Content {
+		if v == E {
+			result = append(result, i)
+		}
+	}
+	return result
 }
