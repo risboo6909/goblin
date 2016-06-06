@@ -44,6 +44,7 @@ const (
 	DRAW = 0
 )
 
+
 // scanLine accept a slice (horizontal, vertical or diagonal), col and row are coordinates of a sequence start
 // length of desired sequence, type of cell (X, O or E) and a scan direction
 func scanLine(line []Cell, col, row, chainLen int, player Cell, direction ScanDirection) []Interval {

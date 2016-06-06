@@ -30,15 +30,10 @@ func TestFindChainDiagonal(t *testing.T) {
 
 	result := FindChain(board, 4, X)
 
-	if result[0] != (Interval{LRDiagonal, 2, 2, 5, 5}) {
-		t.Fail()
-	}
-	if result[1] != (Interval{LRDiagonal, 7, 3, 10, 6}) {
-		t.Fail()
-	}
-	if result[2] != (Interval{LRDiagonal, 0, 15, 3, 18}) {
-		t.Fail()
-	}
+	assertEqual(t, result[0], Interval{LRDiagonal, 2, 2, 5, 5})
+	assertEqual(t, result[1], Interval{LRDiagonal, 7, 3, 10, 6})
+	assertEqual(t, result[2], Interval{LRDiagonal, 0, 15, 3, 18})
+
 
 	// Right-to-left diagonal sequences
 
@@ -168,7 +163,7 @@ func TestFindAllChains(t *testing.T) {
 	if !reflect.DeepEqual(result, map[int][]Interval {
 		3:[]Interval{Interval{horizontal, 16,0,18,0}, Interval{horizontal, 0,18,2,18}},
 		4:[]Interval{Interval{horizontal, 5,0,8,0}}, 5:[]Interval{Interval{RLDiagonal, 2,14,6,10}}}) {
-		t.Fail()
+		t.Fatalf("Error in FindAllChains")
 	}
 
 	board = NewBoard(19, 19)
@@ -177,35 +172,23 @@ func TestFindAllChains(t *testing.T) {
 
 	// return empty map if nothing has been found
 	if len(result) > 0 {
-		t.Fail()
+		t.Fatalf("Error in FindAllChains")
 	}
 }
 
 func TestShuffleIntSlice(t *testing.T) {
 
 	inp := []int{1,2,3,4,5,6,7,8}
-
 	ShuffleIntSlice(inp)
-
-	if !cmpSlices(inp, []int{8,6,2,1,7,5,4,3}) {
-		t.Fail()
-	}
+	assertEqual(t, inp, []int{8,6,2,1,7,5,4,3})
 
 	inp = []int{1,2,3,4,5,6,7,8}
-
 	ShuffleIntSlice(inp)
-
-	if !cmpSlices(inp, []int{7,1,4,2,3,5,8,6}) {
-		t.Fail()
-	}
+	assertEqual(t, inp, []int{7,1,4,2,3,5,8,6})
 
 	inp = []int{}
-
 	ShuffleIntSlice(inp)
-
-	if !cmpSlices(inp, []int{}) {
-		t.Fail()
-	}
+	assertEqual(t, inp, []int{})
 
 }
 
@@ -213,21 +196,10 @@ func TestMakeSearchPatterns(t *testing.T) {
 
 	result := MakeSearchPatterns(5, X)
 
-	if !cmpSlices(result[0], []Cell{88, 88, 88, 88, 88}) {
-		t.Fail()
-	}
-
-	if !cmpSlices(result[1], []Cell{32, 88, 88, 88, 88}) {
-		t.Fail()
-	}
-
-	if !cmpSlices(result[2], []Cell{88, 88, 88, 88, 32}) {
-		t.Fail()
-	}
-
-	if !cmpSlices(result[3], []Cell{32, 32, 88, 88, 88, 32, 32}) {
-		t.Fail()
-	}
+	assertEqual(t, result[0], []Cell{88, 88, 88, 88, 88})
+	assertEqual(t, result[1], []Cell{32, 88, 88, 88, 88})
+	assertEqual(t, result[2], []Cell{88, 88, 88, 88, 32})
+	assertEqual(t, result[3], []Cell{32, 32, 88, 88, 88, 32, 32})
 
 }
 
