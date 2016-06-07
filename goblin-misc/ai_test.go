@@ -62,15 +62,9 @@ func TestFindChainDiagonal(t *testing.T) {
 
 	result = FindChain(board, 6, O)
 
-	if result[0] != (Interval{RLDiagonal, 2, 8, 7, 3}) {
-		t.Fail()
-	}
-	if result[1] != (Interval{RLDiagonal, 0, 18, 5, 13}) {
-		t.Fail()
-	}
-	if result[2] != (Interval{RLDiagonal, 13, 18, 18, 13}) {
-		t.Fail()
-	}
+	assertEqual(t, result[0], Interval{RLDiagonal, 2, 8, 7, 3})
+	assertEqual(t, result[1], Interval{RLDiagonal, 0, 18, 5, 13})
+	assertEqual(t, result[2], Interval{RLDiagonal, 13, 18, 18, 13})
 
 }
 
@@ -114,25 +108,15 @@ func TestFindChainHorizVert(t *testing.T) {
 
 	result := FindChain(board, 4, X)
 
-	if result[0] != (Interval{horizontal, 0, 0, 3, 0}) {
-		t.Fail()
-	}
-	if result[1] != (Interval{horizontal, 5, 0, 8, 0}) {
-		t.Fail()
-	}
-	if result[2] != (Interval{horizontal, 15, 18, 18, 18}) {
-		t.Fail()
-	}
+	assertEqual(t, result[0], Interval{horizontal, 0, 0, 3, 0})
+	assertEqual(t, result[1], Interval{horizontal, 5, 0, 8, 0})
+	assertEqual(t, result[2], Interval{horizontal, 15, 18, 18, 18})
 
-	if result[3] != (Interval{vertical, 0, 0, 0, 3}) {
-		t.Fail()
-	}
-	if result[4] != (Interval{vertical, 5, 0, 5, 3}) {
-		t.Fail()
-	}
-	if result[5] != (Interval{vertical, 18, 15, 18, 18}) {
-		t.Fail()
-	}
+
+	assertEqual(t, result[3], Interval{vertical, 0, 0, 0, 3})
+	assertEqual(t, result[4], Interval{vertical, 5, 0, 5, 3})
+	assertEqual(t, result[5], Interval{vertical, 18, 15, 18, 18})
+
 }
 
 func TestFindAllChains(t *testing.T) {
