@@ -178,12 +178,19 @@ func TestShuffleIntSlice(t *testing.T) {
 
 func TestMakeSearchPatterns(t *testing.T) {
 
-	result := MakeSearchPatterns(5, X)
+	result := MkaeWinningPatterns(5, X)
 
-	assertEqual(t, result[0], []Cell{88, 88, 88, 88, 88})
-	assertEqual(t, result[1], []Cell{32, 88, 88, 88, 88})
-	assertEqual(t, result[2], []Cell{88, 88, 88, 88, 32})
-	assertEqual(t, result[3], []Cell{32, 32, 88, 88, 88, 32, 32})
+	assertEqual(t, result[0], []Cell{X, X, X, X, X})
+	assertEqual(t, result[1], []Cell{E, X, X, X, X})
+	assertEqual(t, result[2], []Cell{X, X, X, X, E})
+	assertEqual(t, result[3], []Cell{E, E, X, X, X, E, E})
+
+	result = MkaeWinningPatterns(3, O)
+
+	assertEqual(t, result[0], []Cell{O, O, O})
+	assertEqual(t, result[1], []Cell{E, O, O})
+	assertEqual(t, result[2], []Cell{O, O, E})
+	assertEqual(t, result[3], []Cell{E, E, O, E, E})
 
 }
 

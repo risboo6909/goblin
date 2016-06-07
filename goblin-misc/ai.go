@@ -103,10 +103,11 @@ func scanLine(line []Cell, col, row, chainLen int, player Cell, direction ScanDi
 
 // MakeSearchPatterns generates winning patterns of
 // specified length to search on a board
-func MakeSearchPatterns(targetLen int, p Cell) [][]Cell {
+func MkaeWinningPatterns(targetLen int, p Cell) [][]Cell {
+
 	winningPatterns := [][]Cell{}
 
-	// test all in a row
+	// test all in a row (for instance: X, X, X, X, X is a winner)
 	winningPatterns = append(winningPatterns, make([]Cell, targetLen))
 
 	// test all minus 1 in a row
@@ -116,18 +117,19 @@ func MakeSearchPatterns(targetLen int, p Cell) [][]Cell {
 	// test all minus 2 in a row
 	winningPatterns = append(winningPatterns, make([]Cell, targetLen - 2 + 4))
 
-	for idx := 0; idx < targetLen - 1 + 1; idx++ {
-		winningPatterns[0][idx] = p
-		winningPatterns[1][idx] = p
-		winningPatterns[2][idx] = p
+	// fill all patterns patterns with player cells
+	for i := 0; i < 4; i++ {
+		for j := 0; j < targetLen + 2; j++ {
+			if len(winningPatterns[i]) > j {
+				winningPatterns[i][j] = p
+			}
+		}
 	}
+
+	// add empty cells
 
 	winningPatterns[1][0] = E
 	winningPatterns[2][targetLen - 1] = E
-
-	for idx := 0; idx < targetLen - 2 + 4; idx++ {
-		winningPatterns[3][idx] = p
-	}
 
 	l := len(winningPatterns[3])
 	winningPatterns[3][0] = E
