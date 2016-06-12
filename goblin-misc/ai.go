@@ -2,6 +2,7 @@ package misc
 
 import (
 	"math/rand"
+	"fmt"
 )
 
 // Interval represents indexes of start and end of an n-length chain`
@@ -44,66 +45,129 @@ const (
 	DRAW = 0
 )
 
+// KMPPrefixTable is a helper function for KMPSearch that generates
+// prefix table for Knuth-Morris-Pratt algorithm
+func KMPPrefixTable(pattern []Cell) []int {
 
-// scanLine accept a slice (horizontal, vertical or diagonal), col and row are coordinates of a sequence start
-// length of desired sequence, type of cell (X, O or E) and a scan direction
-func scanLine(line []Cell, col, row, chainLen int, player Cell, direction ScanDirection) []Interval {
+	result := make([]int, len(pattern))
+	i, j := 0, 1
 
+	for ;i < len(pattern) && j < len(pattern); {
 
-	var (
-		result  []Interval
-		counter = 0
-	)
+		if pattern[i] == pattern[j] {
 
-	// convenience functions
-	pred_match := func (idx int, cell, player Cell) bool {
-		return player == cell && idx < len(line) - 1
-	}
-
-	pred_nomatch := func (idx int, cell, player Cell) bool {
-		return player == cell && idx == len(line) - 1
-	}
-
-	for idx, cell := range line {
-
-		if pred_match(idx, cell, player) {
-
-			counter++
+			result[j] = i + 1
+			i++; j++
 
 		} else {
 
-			if pred_nomatch(idx, cell, player) {
-				counter++
-			} else {
-				idx--
+			if i > 0 {
+				i = result[i - 1]
 			}
 
-			if counter == chainLen {
-				if direction == horizontal {
-					result = append(result, Interval{horizontal, idx - chainLen + 1, row, idx, row})
-
-				} else if direction == vertical {
-					result = append(result, Interval{vertical, col, idx - chainLen + 1, col, idx})
-
-				} else if direction == LRDiagonal {
-					result = append(result, Interval{LRDiagonal, col + idx - chainLen + 1,
-						row + idx - chainLen + 1, col + idx, row + idx})
-
-				} else if direction == RLDiagonal {
-					result = append(result, Interval{RLDiagonal, col + idx - chainLen + 1,
-						row - idx + chainLen - 1, col + idx, row - idx})
-				}
+			if pattern[i] == pattern[j] {
+				result[j] = result[i] + 1
 			}
-			counter = 0
+
+			if i == 0 || (i != 0 && pattern[i] == pattern[j]) {
+				j++
+			}
+
 		}
 	}
 
 	return result
 }
 
-// MakeSearchPatterns generates winning patterns of
-// specified length to search on a board
-func MkaeWinningPatterns(targetLen int, p Cell) [][]Cell {
+// KMPSearch uses Knuth-Morris-Pratt algorithm to find needles in haystacks
+// in O(n) instead of naive O(n^2) =)
+func KMPSearch(needle, haystack []Cell) (bool, int) {
+	table := KMPPrefixTable(needle)
+	i, j := 0, 0
+
+	if len(needle) == 0 {
+		return true, 0
+	}
+
+	for ;j < len(haystack); {
+		if needle[i] == haystack[j] {
+			if i == len(needle) - 1 {
+				return true, j - i
+			}
+			i++; j++
+		} else {
+
+			if i != 0 {
+				j += i - table[i - 1] - 1
+				i = table[i - 1]
+			} else {
+				j++
+			}
+		}
+	}
+
+	return false, -1
+
+}
+
+
+// findAllSubslices returns a list of indices of all position of subslice xs in
+// slice ys, returns [] if xs is not in ys
+func findAllSubslices(xs, ys []Cell) []int {
+
+	var indices []int
+	var offset int
+
+	for {
+		found, idx := KMPSearch(xs, ys)
+		if found {
+			delta := idx + len(xs) - 1
+			indices = append(indices, offset+idx)
+			ys = ys[delta:]
+			offset += delta
+		} else {
+			break
+		}
+	}
+
+	return indices
+}
+
+// scanLine accept a slice (horizontal, vertical or diagonal), col and row of slice star in board coordinates,
+// patterns list to find and returns all intervals which match given patterns
+func scanLine(line []Cell, col, row int, patterns [][]Cell, player Cell, direction ScanDirection) []Interval {
+
+	result := []Interval{}
+
+	for _, pattern := range patterns {
+
+		for _, position := range findAllSubslices(pattern, line) {
+
+			seqLen := len(pattern)
+
+			if direction == horizontal {
+				result = append(result, Interval{horizontal, position, row, position + seqLen - 1, row})
+
+			} else if direction == vertical {
+				result = append(result, Interval{vertical, col, position, col, position + seqLen - 1})
+
+			} else if direction == LRDiagonal {
+				result = append(result, Interval{LRDiagonal, col + position,
+					row + position, col + position + seqLen - 1, row + position + seqLen - 1})
+
+			} else if direction == RLDiagonal {
+				result = append(result, Interval{RLDiagonal, col - position,
+					row + position, col - position - seqLen + 1, row + position + seqLen - 1})
+			}
+
+		}
+	}
+
+	return result
+}
+
+// MakePatterns generates winning patterns of specified length to search on a board
+func MakePatterns(targetLen int, p Cell) [][]Cell {
 
 	winningPatterns := [][]Cell{}
 
@@ -140,9 +204,8 @@ func MkaeWinningPatterns(targetLen int, p Cell) [][]Cell {
 	return winningPatterns
 }
 
-// FindChain finds vertical, horizontal or diagonal chains of
-// successive cells with the same content as a slice of Intervals
-func FindChain(board *BoardDescription, chainLen int, player Cell) []Interval {
+// FindPattern finds vertical, horizontal or diagonal patterns generated using MakePatterns
+func FindPattern(board *BoardDescription, seqLen int, player Cell) []Interval {
 
 	var (
 		matchHoriz []Interval
@@ -150,13 +213,15 @@ func FindChain(board *BoardDescription, chainLen int, player Cell) []Interval {
 		matchDiag  []Interval
 	)
 
+	patterns := MakePatterns(seqLen, player)
+
 	// scan horizontal first
 
 	for i := 0; i < board.CellsVert; i++ {
 		// get slice of each row
 		row := board.GetHorizSlice(i, 0, board.CellsHoriz-1)
 		// and scan for a chain
-		tmp := scanLine(row, 0, i, chainLen, player, horizontal)
+		tmp := scanLine(row, 0, i, patterns, player, horizontal)
 
 		// if there was a positive result copy it to the global result
 		if tmp != nil {
@@ -170,7 +235,7 @@ func FindChain(board *BoardDescription, chainLen int, player Cell) []Interval {
 		// get slice of each column
 		column := board.GetVertSlice(i, 0, board.CellsVert-1)
 		// and scan for a chain
-		tmp := scanLine(column, i, 0, chainLen, player, vertical)
+		tmp := scanLine(column, i, 0, patterns, player, vertical)
 
 		// if there was a positive result copy it to the global result
 		if tmp != nil {
@@ -181,39 +246,27 @@ func FindChain(board *BoardDescription, chainLen int, player Cell) []Interval {
 	// and finally diagonal
 
 	for i := 0; i < board.CellsVert; i++ {
-		tmp := scanLine(ReverseCellsSlice(board.GetRLDiagonal(0, i)), 0, i, chainLen, player, RLDiagonal)
+		tmp := scanLine(board.GetRLDiagonal(0, i), i, 0, patterns, player, RLDiagonal)
 		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
 	}
 
 	for i := 1; i < board.CellsHoriz; i++ {
-		tmp := scanLine(ReverseCellsSlice(board.GetRLDiagonal(i, board.CellsVert - 1)), i,
-			board.CellsVert - 1, chainLen, player, RLDiagonal)
+		tmp := scanLine(board.GetRLDiagonal(i, board.CellsVert - 1), board.CellsVert - 1, i,
+			patterns, player, RLDiagonal)
 		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
 	}
 
 	for i := 0; i < board.CellsHoriz; i++ {
-		tmp := scanLine(board.GetLRDiagonal(i, 0), i, 0, chainLen, player, LRDiagonal)
+		tmp := scanLine(board.GetLRDiagonal(i, 0), i, 0, patterns, player, LRDiagonal)
 		if tmp != nil { matchDiag = append(matchDiag, tmp...) }
 	}
 
 	for i := 1; i < board.CellsVert; i++ {
-		tmp := scanLine(board.GetLRDiagonal(0, i), 0, i, chainLen, player, LRDiagonal)
+		tmp := scanLine(board.GetLRDiagonal(0, i), 0, i, patterns, player, LRDiagonal)
 		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
 	}
 
 	return append(matchHoriz, append(matchVert, matchDiag...)...)
-}
-
-// FindAllChains finds all the chains of length in interval [chainLenMin..chainLenMax]
-func FindAllChains(board *BoardDescription, chainLenMin, chainLenMax int, player Cell) map[int][]Interval {
-	result := make(map[int][]Interval)
-	for chainLen := chainLenMin; chainLen <= chainLenMax; chainLen++ {
-		tmp := FindChain(board, chainLen, player)
-		if len(tmp) != 0 {
-			result[chainLen] = tmp
-		}
-	}
-	return result
 }
 
 // ShuffleIntSlice shuffles a slice of ints in-place
@@ -265,48 +318,42 @@ func SwitchPlayer(player Cell) Cell {
 func MonteCarloEval(board *BoardDescription, options AIOptions, trials, maxMoves int, whoMoves Cell) float64 {
 
 	var (
-		cellIdx int
 		ai_wins, player_wins int
 	)
-
-	maxMoves = maxIntPair(board.NumCells(), maxMoves)
 
 	for trial := 0; trial < trials; trial++ {
 
 		clonedBoard := CloneBoard(board)
 		free := ShuffleIntSlice(board.GetFreeIndices())
 
+		maxMoves = minIntPair(minIntPair(board.NumCells(), maxMoves), len(free))
+
 		for i := 0; i < maxMoves; i++ {
 
-			cellIdx = free[0]
-			col, row, err := clonedBoard.FromLinear(cellIdx)
+			// check whether we have guaranteed winning position
+			results := FindPattern(clonedBoard, options.winSequenceLength, whoMoves)
+			fmt.Println(clonedBoard)
+			fmt.Println(results)
 
-			if err == nil {
-
-				clonedBoard.SetCell(col, row, whoMoves)
-
-				// check whether we have guaranteed winning position
-				results := FindAllChains(clonedBoard, options.winSequenceLength - 1,
-					options.winSequenceLength, whoMoves)
-
-				if len(results) != 0 {
-					if whoMoves == options.AIPlayer {
-						// computer will win in next move(s)
-						ai_wins++
-						break
-					} else {
-						// opponent will win in next move(s)
-						player_wins++
-						break
-					}
+			if len(results) != 0 {
+				if whoMoves == options.AIPlayer {
+					// computer will win in next move(s)
+					ai_wins++
+					fmt.Println(i)
+					break
+				} else {
+					// opponent will win in next move(s)
+					player_wins++
+					fmt.Println("Oh no!")
+					break
 				}
-
-				free = free[1:]
-				whoMoves = SwitchPlayer(whoMoves)
-
-			} else {
-				panic("Index out of bounds in method MonteCarlEval")
 			}
+
+			col, row, _:= clonedBoard.FromLinear(free[0])
+			clonedBoard.SetCell(col, row, whoMoves)
+
+			free = free[1:]
+			whoMoves = SwitchPlayer(whoMoves)
 		}
 
 	}

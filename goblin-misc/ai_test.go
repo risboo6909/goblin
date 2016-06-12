@@ -28,12 +28,15 @@ func TestFindChainDiagonal(t *testing.T) {
 	board.SetCell(2, 17, X)
 	board.SetCell(3, 18, X)
 
-	result := FindChain(board, 4, X)
+	result := FindPattern(board, 4, X)
 
 	assertEqual(t, result[0], Interval{LRDiagonal, 2, 2, 5, 5})
-	assertEqual(t, result[1], Interval{LRDiagonal, 7, 3, 10, 6})
-	assertEqual(t, result[2], Interval{LRDiagonal, 0, 15, 3, 18})
-
+	assertEqual(t, result[1], Interval{LRDiagonal, 1, 1, 4, 4})
+	assertEqual(t, result[2], Interval{LRDiagonal, 3, 3, 6, 6})
+	assertEqual(t, result[3], Interval{LRDiagonal, 7, 3, 10, 6})
+	assertEqual(t, result[4], Interval{LRDiagonal, 6, 2, 9, 5})
+	assertEqual(t, result[5], Interval{LRDiagonal, 8, 4, 11, 7})
+	assertEqual(t, result[6], Interval{LRDiagonal, 0, 15, 3, 18})
 
 	// Right-to-left diagonal sequences
 
@@ -60,11 +63,14 @@ func TestFindChainDiagonal(t *testing.T) {
 	board.SetCell(6, 4, O)
 	board.SetCell(7, 3, O)
 
-	result = FindChain(board, 6, O)
+	result = FindPattern(board, 6, O)
 
-	assertEqual(t, result[0], Interval{RLDiagonal, 2, 8, 7, 3})
-	assertEqual(t, result[1], Interval{RLDiagonal, 0, 18, 5, 13})
-	assertEqual(t, result[2], Interval{RLDiagonal, 13, 18, 18, 13})
+	assertEqual(t, result[0], Interval{RLDiagonal, 7, 3, 2, 8})
+	assertEqual(t, result[1], Interval{RLDiagonal, 8, 2, 3, 7})
+	assertEqual(t, result[2], Interval{RLDiagonal, 6, 4, 1, 9})
+	assertEqual(t, result[3], Interval{RLDiagonal, 5, 13, 0, 18})
+	assertEqual(t, result[4], Interval{RLDiagonal, 6, 12, 1, 17})
+	assertEqual(t, result[5], Interval{RLDiagonal, 18, 13, 13, 18})
 
 }
 
@@ -106,16 +112,22 @@ func TestFindChainHorizVert(t *testing.T) {
 	board.SetCell(18, 17, X)
 	board.SetCell(18, 18, X)
 
-	result := FindChain(board, 4, X)
+	result := FindPattern(board, 4, X)
 
 	assertEqual(t, result[0], Interval{horizontal, 0, 0, 3, 0})
 	assertEqual(t, result[1], Interval{horizontal, 5, 0, 8, 0})
-	assertEqual(t, result[2], Interval{horizontal, 15, 18, 18, 18})
+	assertEqual(t, result[2], Interval{horizontal, 4, 0, 7, 0})
+	assertEqual(t, result[3], Interval{horizontal, 1, 0, 4, 0})
+	assertEqual(t, result[4], Interval{horizontal, 6, 0, 9, 0})
+	assertEqual(t, result[5], Interval{horizontal, 15, 18, 18, 18})
+	assertEqual(t, result[6], Interval{horizontal, 14, 18, 17, 18})
 
-
-	assertEqual(t, result[3], Interval{vertical, 0, 0, 0, 3})
-	assertEqual(t, result[4], Interval{vertical, 5, 0, 5, 3})
-	assertEqual(t, result[5], Interval{vertical, 18, 15, 18, 18})
+	assertEqual(t, result[7], Interval{vertical, 0, 0, 0, 3})
+	assertEqual(t, result[8], Interval{vertical, 0, 1, 0, 4})
+	assertEqual(t, result[9], Interval{vertical, 5, 0, 5, 3})
+	assertEqual(t, result[10], Interval{vertical, 5, 1, 5, 4})
+	assertEqual(t, result[11], Interval{vertical, 18, 15, 18, 18})
+	assertEqual(t, result[12], Interval{vertical, 18, 14, 18, 17})
 
 }
 
@@ -138,26 +150,39 @@ func TestFindAllChains(t *testing.T) {
 	board.SetCell(1, 18, X)
 	board.SetCell(2, 18, X)
 
+	board.SetCell(14, 0, X)
+	board.SetCell(15, 0, X)
 	board.SetCell(16, 0, X)
-	board.SetCell(17, 0, X)
-	board.SetCell(18, 0, X)
 
-	result := FindAllChains(board, 2, 5, X)
+	result := FindPattern(board, 5, X)
 
-	if !reflect.DeepEqual(result, map[int][]Interval {
-		3:[]Interval{Interval{horizontal, 16,0,18,0}, Interval{horizontal, 0,18,2,18}},
-		4:[]Interval{Interval{horizontal, 5,0,8,0}}, 5:[]Interval{Interval{RLDiagonal, 2,14,6,10}}}) {
+	if !reflect.DeepEqual(result, []Interval {
+		Interval{horizontal, 4,0,8,0}, Interval{horizontal, 5,0,9,0},
+		Interval{horizontal, 12,0,18,0}, Interval{RLDiagonal, 6,10,2,14},
+		Interval{RLDiagonal, 7,9,3,13}, Interval{RLDiagonal, 5,11,1,15}}) {
 		t.Fatalf("Error in FindAllChains")
 	}
 
 	board = NewBoard(19, 19)
 
-	result = FindAllChains(board, 3, 4, O)
+	result = FindPattern(board, 3, O)
 
 	// return empty map if nothing has been found
 	if len(result) > 0 {
 		t.Fatalf("Error in FindAllChains")
 	}
+
+	board = NewBoard(6, 6)
+
+	board.SetCell(2, 2, X)
+	board.SetCell(3, 3, X)
+	board.SetCell(4, 4, X)
+	board.SetCell(5, 5, X)
+
+	result = FindPattern(board, 5, X)
+
+	assertEqual(t, result[0], Interval{LRDiagonal, 1, 1, 5, 5})
+
 }
 
 func TestShuffleIntSlice(t *testing.T) {
@@ -178,14 +203,14 @@ func TestShuffleIntSlice(t *testing.T) {
 
 func TestMakeSearchPatterns(t *testing.T) {
 
-	result := MkaeWinningPatterns(5, X)
+	result := MakePatterns(5, X)
 
 	assertEqual(t, result[0], []Cell{X, X, X, X, X})
 	assertEqual(t, result[1], []Cell{E, X, X, X, X})
 	assertEqual(t, result[2], []Cell{X, X, X, X, E})
 	assertEqual(t, result[3], []Cell{E, E, X, X, X, E, E})
 
-	result = MkaeWinningPatterns(3, O)
+	result = MakePatterns(3, O)
 
 	assertEqual(t, result[0], []Cell{O, O, O})
 	assertEqual(t, result[1], []Cell{E, O, O})
@@ -196,12 +221,13 @@ func TestMakeSearchPatterns(t *testing.T) {
 
 //func TestMonteCarloEval(t *testing.T) {
 //
-//	var board = NewBoard(5, 5)
+//	var board = NewBoard(6, 6)
 //
-//	board.SetCell(1, 1, X)
 //	board.SetCell(2, 2, X)
 //	board.SetCell(3, 3, X)
+//	board.SetCell(4, 4, X)
+//	board.SetCell(5, 5, X)
 //	//board.SetCell(3, 3, O)
 //
-//	fmt.Println(MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5, maxDepth: 10}, 10, 19*19, O))
+//	fmt.Println(MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 30, 6*6, X))
 //}
