@@ -197,7 +197,7 @@ func TestMakeSearchPatterns(t *testing.T) {
 
 }
 
-func TestMonteCarloEval(t *testing.T) {
+func TestMonteCarloBestMove(t *testing.T) {
 
 	var board = NewBoard(6, 6)
 
@@ -206,12 +206,10 @@ func TestMonteCarloEval(t *testing.T) {
 	board.SetCell(3, 3, X)
 	board.SetCell(4, 4, X)
 
-	result := MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, O)
+	result, _ := MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, O)
 
-	// Yeahh, X will certainly win!
-	for _, value := range result {
-		assertEqual(t, value, 1.0)
-	}
+	// Yeahh, X will certainly w in!
+	assertEqual(t, result, Move{0, 0})
 
 	board = NewBoard(6, 6)
 
@@ -219,26 +217,22 @@ func TestMonteCarloEval(t *testing.T) {
 	board.SetCell(2, 2, O)
 	board.SetCell(3, 3, O)
 	board.SetCell(4, 4, O)
-	board.SetCell(5, 5, O)
 
-	result = MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, X)
+	result, _ = MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, O)
 
 	// Better luck next time, O was really good in this game
-	for _, value := range result {
-		assertEqual(t, value, 0.0)
-	}
+	assertEqual(t, result, Move{0, 0})
 
 	board = NewBoard(6, 6)
 
-	result = MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, X)
+	board.SetCell(0, 1, O)
+	board.SetCell(1, 1, O)
+	board.SetCell(2, 1, O)
+	board.SetCell(3, 1, O)
 
-	sum, cnt := 0.0, 0.0
-	for _, value := range result {
-		sum += value
-		cnt++
-	}
+	result, _ = MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, X)
 
-	// Starting from the clear board, average wining probability should be about 0.5
-	assertEqual(t, roundFloat(sum/cnt, 1), 0.5)
+	// The only move for X is 4, 1
+	assertEqual(t, result, Move{4, 1})
 
 }

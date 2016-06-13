@@ -225,26 +225,31 @@ func (p *BoardDescription) FromLinear(idx int) (int, int, error) {
 
 // SetCell setup cell value for a give col and row
 func (p *BoardDescription) SetCell(col, row int, val Cell) {
-	idx, err := p.ToLinear(col, row)
-	if err == nil {
-		p.Content[idx] = val
-	}
+	idx, _ := p.ToLinear(col, row)
+	p.SetCellLinear(idx, val)
 }
 
 // SetCellLinear setup cell value based on linear coord
 func (p *BoardDescription) SetCellLinear(linearIdx int, val Cell) {
 	if linearIdx < p.NumCells() {
 		p.Content[linearIdx] = val
+	} else {
+		panic(errors.New("Index out of range"))
 	}
 }
 
 // GetCell returns cell value for a given col and row
 func (p *BoardDescription) GetCell(col, row int) Cell {
-	idx, err := p.ToLinear(col, row)
-	if err == nil {
-		return p.Content[idx]
+	idx, _ := p.ToLinear(col, row)
+	return p.GetCellLinear(idx)
+}
+
+// GetCellLinear returns for a given linear index
+func (p *BoardDescription) GetCellLinear(linearIdx int) Cell {
+	if linearIdx < p.NumCells() {
+		return p.Content[linearIdx]
 	}
-	panic(err)
+	panic(errors.New("Index out of range"))
 }
 
 // GetFreeIndices returns indices of free board cells

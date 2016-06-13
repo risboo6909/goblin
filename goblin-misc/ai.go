@@ -2,6 +2,7 @@ package misc
 
 import (
 	"math/rand"
+	"math"
 )
 
 // Interval represents indexes of start and end of an n-length chain`
@@ -276,76 +277,110 @@ func switchPlayer(player Cell) Cell {
 	return X
 }
 
-func checkWin(board *BoardDescription, winSequenceLength int, AIPlayer, whoMoves Cell) Cell {
+func checkWin(board *BoardDescription, opt AIOptions) Cell {
 
 	// check whether we have guaranteed winning position
-	results := FindPattern(board, winSequenceLength, whoMoves)
 
-	if len(results) != 0 {
+	if len(FindPattern(board, opt.winSequenceLength, opt.AIPlayer)) != 0 {
+		return opt.AIPlayer
+	}
 
-		if whoMoves == AIPlayer {
-			// computer will win in next move(s)
-			return AIPlayer
-		} else {
-			// opponent will win in next move(s)
-			return switchPlayer(AIPlayer)
+	if len(FindPattern(board, opt.winSequenceLength, switchPlayer(opt.AIPlayer))) != 0 {
+		return switchPlayer(opt.AIPlayer)
+	}
+
+	return E
+}
+
+func updateScores(board *BoardDescription, opponent, winner Cell, scores []float64) {
+
+	for idx := 0; idx < board.NumCells(); idx++ {
+
+		if board.Content[idx] == E {
+			continue
 		}
 
+		if board.Content[idx] == opponent {
+			if opponent == winner {
+				scores[idx]++
+			} else {
+				scores[idx]--
+			}
+		} else {
+			if opponent == winner {
+				scores[idx]--
+			} else {
+				scores[idx]++
+			}
+		}
 	}
-	return E
 }
 
 // MonteCarloEval uses Monte-Carlo method to assess current position, intended
 // to be used as static evaluator for leaf nodes
-func MonteCarloEval(board *BoardDescription, options AIOptions, maxMoves, trials int, whoMoves Cell) map[Move]float64 {
-
-	grades := make(map[Move]float64)
+func MonteCarloEval(board *BoardDescription, options AIOptions, maxMoves, trials int, movesFirst Cell) []float64 {
 
 	opponent := switchPlayer(options.AIPlayer)
+	scores := make([]float64, board.NumCells())
 
-	for _, freeCellIdx := range board.GetFreeIndices() {
+	for trial := 0; trial < trials; trial++ {
 
-		ai_wins, player_wins := 0, 0
-		col, row, _ := board.FromLinear(freeCellIdx)
+		clonedBoard := CloneBoard(board)
+		free := ShuffleIntSlice(clonedBoard.GetFreeIndices())
 
-		movesFirst := whoMoves
+		iterations := minIntPair(minIntPair(board.NumCells(), maxMoves), len(free))
 
-		for trial := 0; trial < trials; trial++ {
+		whoMoves := movesFirst
 
-			clonedBoard := CloneBoard(board)
-			clonedBoard.SetCell(col, row, movesFirst)
+		for i := 0;; i++ {
 
-			free := ShuffleIntSlice(clonedBoard.GetFreeIndices())
+			winner := checkWin(clonedBoard, options)
 
-			for i := 0; i < minIntPair(minIntPair(board.NumCells(), maxMoves), len(free)); i++ {
+			if winner != E {
+				updateScores(clonedBoard, opponent, winner, scores)
+				break
+			}
 
-				winner := checkWin(clonedBoard, options.winSequenceLength, options.AIPlayer, whoMoves)
-
-				if winner == options.AIPlayer {
-					ai_wins++
-					break
-
-				} else if winner == opponent {
-					player_wins++
-					break
-				}
-
-				whoMoves = switchPlayer(whoMoves)
+			if i < iterations {
 
 				clonedBoard.SetCellLinear(free[0], whoMoves)
-				free = free[1:]
-			}
-		}
 
-		wining_prob := float64(ai_wins) / (float64(ai_wins) + float64(player_wins))
-		grades[Move{col, row}] = wining_prob
+				whoMoves = switchPlayer(whoMoves)
+				free = free[1:]
+
+			} else if i >= iterations { break }
+		}
 
 	}
 
-	return grades
+	return scores
 }
+
+
+func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxMoves, trials int, whoMoves Cell) (Move, float64) {
+	scores := MonteCarloEval(board, options, maxMoves, trials, whoMoves)
+
+	bestValue := -math.MaxFloat64
+	bestMove := Move{}
+
+	for _, idx := range board.GetFreeIndices() {
+		if bestValue < scores[idx] {
+			bestValue = scores[idx]
+			col, row, _ := board.FromLinear(idx)
+			bestMove = Move{col, row}
+		}
+	}
+
+	return bestMove, bestValue
+}
+
 
 // Function to choose the best move from a given position
 func MakeMove(board *BoardDescription, options AIOptions) {
+
+	// Use Monte-Carlo for static evaluation
+	bestMove, _ := MonteCarloBestMove(board, options, board.NumCells(), 1000, options.AIPlayer)
+	//fmt.Println(bestMove, bestScore)
+	board.SetCell(bestMove.col, bestMove.row, options.AIPlayer)
 
 }
