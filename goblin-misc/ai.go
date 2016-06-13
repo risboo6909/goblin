@@ -15,6 +15,10 @@ type Interval struct {
 
 type ScanDirection uint8
 
+type Move struct {
+	col, row int
+}
+
 type AIOptions struct {
 
 	AIPlayer Cell
@@ -173,14 +177,10 @@ func MakePatterns(targetLen int, p Cell) [][]Cell {
 	winningPatterns = append(winningPatterns, make([]Cell, targetLen))
 
 	// test all minus 1 in a row
-	winningPatterns = append(winningPatterns, make([]Cell, targetLen - 1 + 1))
-	winningPatterns = append(winningPatterns, make([]Cell, targetLen - 1 + 1))
-
-	// test all minus 2 in a row
-	winningPatterns = append(winningPatterns, make([]Cell, targetLen - 2 + 4))
+	winningPatterns = append(winningPatterns, make([]Cell, targetLen + 1))
 
 	// fill all patterns patterns with player cells
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 2; i++ {
 		for j := 0; j < targetLen + 2; j++ {
 			if len(winningPatterns[i]) > j {
 				winningPatterns[i][j] = p
@@ -189,15 +189,8 @@ func MakePatterns(targetLen int, p Cell) [][]Cell {
 	}
 
 	// add empty cells
-
 	winningPatterns[1][0] = E
-	winningPatterns[2][targetLen - 1] = E
-
-	l := len(winningPatterns[3])
-	winningPatterns[3][0] = E
-	winningPatterns[3][1] = E
-	winningPatterns[3][l - 1] = E
-	winningPatterns[3][l - 2] = E
+	winningPatterns[1][len(winningPatterns[1]) - 1] = E
 
 	return winningPatterns
 }
@@ -276,57 +269,80 @@ func ShuffleIntSlice(slice []int) []int {
 	return slice
 }
 
-func SwitchPlayer(player Cell) Cell {
+func switchPlayer(player Cell) Cell {
 	if player == X {
 		return O
 	}
 	return X
 }
 
-// MonteCarloEval uses Monte-Carlo method to assess current position, intended
-// to be used as static evaluator for leaf nodes
-func MonteCarloEval(board *BoardDescription, options AIOptions, trials, maxMoves int, whoMoves Cell) float64 {
+func checkWin(board *BoardDescription, winSequenceLength int, AIPlayer, whoMoves Cell) Cell {
 
-	var (
-		ai_wins, player_wins int
-	)
+	// check whether we have guaranteed winning position
+	results := FindPattern(board, winSequenceLength, whoMoves)
 
-	for trial := 0; trial < trials; trial++ {
+	if len(results) != 0 {
 
-		clonedBoard := CloneBoard(board)
-		free := ShuffleIntSlice(board.GetFreeIndices())
-
-		maxMoves = minIntPair(minIntPair(board.NumCells(), maxMoves), len(free))
-
-		for i := 0; i < maxMoves; i++ {
-
-			col, row, _:= clonedBoard.FromLinear(free[0])
-			clonedBoard.SetCell(col, row, whoMoves)
-			free = free[1:]
-
-			// check whether we have guaranteed winning position
-			results := FindPattern(clonedBoard, options.winSequenceLength, whoMoves)
-
-			if len(results) != 0 {
-				if whoMoves == options.AIPlayer {
-					// computer will win in next move(s)
-					ai_wins++
-					break
-				} else {
-					// opponent will win in next move(s)
-					player_wins++
-					break
-				}
-			}
-
-			whoMoves = SwitchPlayer(whoMoves)
+		if whoMoves == AIPlayer {
+			// computer will win in next move(s)
+			return AIPlayer
+		} else {
+			// opponent will win in next move(s)
+			return switchPlayer(AIPlayer)
 		}
 
 	}
+	return E
+}
 
-	wining_prob := float64(ai_wins) / (float64(ai_wins) + float64(player_wins))
+// MonteCarloEval uses Monte-Carlo method to assess current position, intended
+// to be used as static evaluator for leaf nodes
+func MonteCarloEval(board *BoardDescription, options AIOptions, maxMoves, trials int, whoMoves Cell) map[Move]float64 {
 
-	return wining_prob
+	grades := make(map[Move]float64)
+
+	opponent := switchPlayer(options.AIPlayer)
+
+	for _, freeCellIdx := range board.GetFreeIndices() {
+
+		ai_wins, player_wins := 0, 0
+		col, row, _ := board.FromLinear(freeCellIdx)
+
+		movesFirst := whoMoves
+
+		for trial := 0; trial < trials; trial++ {
+
+			clonedBoard := CloneBoard(board)
+			clonedBoard.SetCell(col, row, movesFirst)
+
+			free := ShuffleIntSlice(clonedBoard.GetFreeIndices())
+
+			for i := 0; i < minIntPair(minIntPair(board.NumCells(), maxMoves), len(free)); i++ {
+
+				winner := checkWin(clonedBoard, options.winSequenceLength, options.AIPlayer, whoMoves)
+
+				if winner == options.AIPlayer {
+					ai_wins++
+					break
+
+				} else if winner == opponent {
+					player_wins++
+					break
+				}
+
+				whoMoves = switchPlayer(whoMoves)
+
+				clonedBoard.SetCellLinear(free[0], whoMoves)
+				free = free[1:]
+			}
+		}
+
+		wining_prob := float64(ai_wins) / (float64(ai_wins) + float64(player_wins))
+		grades[Move{col, row}] = wining_prob
+
+	}
+
+	return grades
 }
 
 // Function to choose the best move from a given position
