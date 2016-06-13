@@ -231,6 +231,13 @@ func (p *BoardDescription) SetCell(col, row int, val Cell) {
 	}
 }
 
+// SetCellLinear setup cell value based on linear coord
+func (p *BoardDescription) SetCellLinear(linearIdx int, val Cell) {
+	if linearIdx < p.NumCells() {
+		p.Content[linearIdx] = val
+	}
+}
+
 // GetCell returns cell value for a given col and row
 func (p *BoardDescription) GetCell(col, row int) Cell {
 	idx, err := p.ToLinear(col, row)
@@ -251,4 +258,18 @@ func (p *BoardDescription) GetFreeIndices() []int {
 		}
 	}
 	return result
+}
+
+// Represent board in human-readable format
+func (p *BoardDescription) String() string {
+	repr := "Board\n"
+	for row := 0; row < p.CellsVert; row++ {
+		for col := 0; col < p.CellsHoriz; col++ {
+			if p.GetCell(col, row) == E {
+				repr += " ."
+			} else { repr += " " + string(p.GetCell(col, row)) }
+		}
+		repr += "\n"
+	}
+	return repr
 }
