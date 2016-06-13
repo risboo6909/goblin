@@ -25,9 +25,13 @@ type DrawableBoard struct {
 
 func NewBoard(cellsHoriz, cellsVert, x, y int, boardColor, boardBg, labelsColor,
 	labelsBg termbox.Attribute) *DrawableBoard {
-	return &DrawableBoard{misc.NewBoard(cellsHoriz, cellsVert),
-		              x, y,
-		              BoardAttrs{boardColor, boardBg, labelsColor, labelsBg}}
+	return CloneExistingBoard(misc.NewBoard(cellsHoriz, cellsVert), x, y,
+		                  boardColor, boardBg, labelsColor, labelsBg)
+}
+
+func CloneExistingBoard(board *misc.BoardDescription, x, y int, boardColor, boardBg, labelsColor,
+	labelsBg termbox.Attribute) *DrawableBoard {
+	return &DrawableBoard{board, x, y, BoardAttrs{boardColor, boardBg, labelsColor, labelsBg}}
 }
 
 func modN(n float64) func(int) float64 {
@@ -163,14 +167,14 @@ func fillBoard(board *DrawableBoard) {
 	}
 }
 
-func drawCursor(board *DrawableBoard, cursor *Cursor) {
+func drawCursor(board *DrawableBoard, cursor Cursor) {
 	val := board.GetCell(cursor.Col, cursor.Row)
 	termbox.SetCell(getScrX(board, cursor.Col), getScrY(board, cursor.Row),
 		rune(val), cursor.FgColor, cursor.BgColor)
 }
 
 // DrawBoard draws ASCII game board
-func DrawBoard(board *DrawableBoard, cursor *Cursor) {
+func DrawBoard(board *DrawableBoard, cursor Cursor) {
 
 	x := board.X + 2
 	y := board.Y + 1

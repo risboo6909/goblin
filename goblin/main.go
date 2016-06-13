@@ -12,10 +12,12 @@ var (
 	gameState = StateGameplay
 	moveBoard = false
 
-	board = ui.NewBoard(3, 3, 0, 0, termbox.ColorBlack, termbox.ColorBlue,
+	gameSession = misc.CreateNewSession(15, misc.X)
+
+	board = ui.CloneExistingBoard(gameSession.Board, 0, 0, termbox.ColorBlack, termbox.ColorBlue,
 		termbox.ColorRed, termbox.ColorBlack)
 
-	cursor = &ui.Cursor{Board: board, Col: 2, Row: 1,
+	cursor = ui.Cursor{Board: board, Col: 2, Row: 1,
 		FgColor: termbox.ColorGreen, BgColor: termbox.ColorWhite}
 )
 
@@ -77,6 +79,7 @@ func update() {
 				if board.GetCell(cursor.Col, cursor.Row) == misc.E {
 					board.SetCell(cursor.Col, cursor.Row, misc.X)
 				}
+				gameSession.MakeMove()
 			}
 		}
 	}
