@@ -281,17 +281,20 @@ func checkWin(board *BoardDescription, opt AIOptions) Cell {
 
 	// check whether we have guaranteed winning position
 
+	opponent := switchPlayer(opt.AIPlayer)
+
 	if len(FindPattern(board, opt.winSequenceLength, opt.AIPlayer)) != 0 {
 		return opt.AIPlayer
 	}
 
-	if len(FindPattern(board, opt.winSequenceLength, switchPlayer(opt.AIPlayer))) != 0 {
-		return switchPlayer(opt.AIPlayer)
+	if len(FindPattern(board, opt.winSequenceLength, opponent)) != 0 {
+		return opponent
 	}
 
 	return E
 }
 
+// updateScores updates scores array according to Monte-Carlo outcomes
 func updateScores(board *BoardDescription, opponent, winner Cell, scores []float64) {
 
 	for idx := 0; idx < board.NumCells(); idx++ {
@@ -316,19 +319,23 @@ func updateScores(board *BoardDescription, opponent, winner Cell, scores []float
 	}
 }
 
-// MonteCarloEval uses Monte-Carlo method to assess current position, intended
-// to be used as static evaluator for leaf nodes
-func MonteCarloEval(board *BoardDescription, options AIOptions, maxMoves, trials int, movesFirst Cell) []float64 {
+// MonteCarloEval uses Monte-Carlo method to assess current position, intended to be used
+// as a static evaluator for leaf nodes
+func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials int, movesFirst Cell) []float64 {
 
 	opponent := switchPlayer(options.AIPlayer)
 	scores := make([]float64, board.NumCells())
 
 	for trial := 0; trial < trials; trial++ {
 
+		// clone existing board
 		clonedBoard := CloneBoard(board)
+
+		// shuffle free cells
 		free := ShuffleIntSlice(clonedBoard.GetFreeIndices())
 
-		iterations := minIntPair(minIntPair(board.NumCells(), maxMoves), len(free))
+		// compute number of iterations for each trial
+		iterations := minIntPair(minIntPair(board.NumCells(), maxDepth), len(free))
 
 		whoMoves := movesFirst
 
@@ -356,31 +363,33 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxMoves, trials
 	return scores
 }
 
+// MonteCarloBestMove search for a best move by using Monte-Carlo evaluation, accepts board description, ai options
+// struct, maxDepth - is a maximum depth to scan, trials - number of trial and whoMoves which states who is going
+// to make next move
+func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxDepth, trials int, whoMoves Cell) (Move, float64) {
 
-func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxMoves, trials int, whoMoves Cell) (Move, float64) {
-	scores := MonteCarloEval(board, options, maxMoves, trials, whoMoves)
+	scores := MonteCarloEval(board, options, maxDepth, trials, whoMoves)
 
-	bestValue := -math.MaxFloat64
-	bestMove := Move{}
+	bestValue, bestMove := -math.MaxFloat64, 0
 
 	for _, idx := range board.GetFreeIndices() {
 		if bestValue < scores[idx] {
 			bestValue = scores[idx]
-			col, row, _ := board.FromLinear(idx)
-			bestMove = Move{col, row}
+			bestMove = idx
 		}
 	}
 
-	return bestMove, bestValue
+	col, row, _ := board.FromLinear(bestMove)
+
+	return Move{col, row}, bestValue
 }
 
 
 // Function to choose the best move from a given position
 func MakeMove(board *BoardDescription, options AIOptions) {
-
 	// Use Monte-Carlo for static evaluation
-	bestMove, _ := MonteCarloBestMove(board, options, board.NumCells(), 1000, options.AIPlayer)
-	//fmt.Println(bestMove, bestScore)
-	board.SetCell(bestMove.col, bestMove.row, options.AIPlayer)
+	bestMove, _ := MonteCarloBestMove(board, options, board.NumCells(),
+		300, options.AIPlayer)
 
+	board.SetCell(bestMove.col, bestMove.row, options.AIPlayer)
 }
