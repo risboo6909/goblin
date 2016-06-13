@@ -7,6 +7,24 @@ import (
 	"runtime"
 )
 
+var EPSILON float64 = 0.00000001
+
+func floatEquals(a, b float64) bool {
+	if ((a - b) < EPSILON && (b - a) < EPSILON) {
+		return true
+	}
+	return false
+}
+
+func round(f float64) float64 {
+	return math.Floor(f + .5)
+}
+
+func roundFloat(f float64, places int) (float64) {
+	shift := math.Pow(10, float64(places))
+	return round(f * shift) / shift;
+}
+
 func interfaceSlice(slice interface{}) []interface{} {
 	s := reflect.ValueOf(slice)
 	if s.Kind() != reflect.Slice {

@@ -51,14 +51,6 @@ func diagonalDistance(startCol, startRow, endCol, endRow int) int {
 	return diagonalDistance
 }
 
-// ReverseCellsSlice reverses a slice of board cells in-place
-func ReverseCellsSlice(slice []Cell) []Cell {
-	for i, j := 0, len(slice) - 1; i < j; i, j = i + 1, j - 1 {
-		slice[i], slice[j] = slice[j], slice[i]
-	}
-	return slice
-}
-
 // NewBoard creates a new struct of type BoardDescription with allocated
 // slice for a board contents
 func NewBoard(cellsHoriz, cellsVert int) *BoardDescription {

@@ -219,15 +219,41 @@ func TestMakeSearchPatterns(t *testing.T) {
 
 }
 
-//func TestMonteCarloEval(t *testing.T) {
-//
-//	var board = NewBoard(6, 6)
-//
-//	board.SetCell(2, 2, X)
-//	board.SetCell(3, 3, X)
-//	board.SetCell(4, 4, X)
-//	board.SetCell(5, 5, X)
-//	//board.SetCell(3, 3, O)
-//
-//	fmt.Println(MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 30, 6*6, X))
-//}
+func TestMonteCarloEval(t *testing.T) {
+
+	var board = NewBoard(6, 6)
+
+	board.SetCell(2, 2, X)
+	board.SetCell(3, 3, X)
+	board.SetCell(4, 4, X)
+	board.SetCell(5, 5, X)
+
+	// Winning position for X
+	assertEqual(t, MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 100, 6*6, O), 1.0)
+
+	board = NewBoard(6, 6)
+
+	board.SetCell(2, 2, O)
+	board.SetCell(3, 3, O)
+	board.SetCell(4, 4, O)
+	board.SetCell(5, 5, O)
+	board.SetCell(6, 6, O)
+
+	// O wins here, no chances for X
+	assertEqual(t, MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 100, 6*6, X), 0.0)
+
+	board = NewBoard(6, 6)
+
+	board.SetCell(0, 0, O)
+	board.SetCell(1, 1, O)
+	board.SetCell(2, 2, O)
+
+	// X still have a chance to win
+	assertEqual(t, roundFloat(MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 100, 6*6, O), 2), 0.26)
+
+	board = NewBoard(6, 6)
+
+	// AI (X) moves first so it has a small advantage
+	assertEqual(t, roundFloat(MonteCarloEval(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 1000, 6*6, X), 2), 0.54)
+
+}

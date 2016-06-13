@@ -2,7 +2,6 @@ package misc
 
 import (
 	"math/rand"
-	"fmt"
 )
 
 // Interval represents indexes of start and end of an n-length chain`
@@ -109,7 +108,6 @@ func KMPSearch(needle, haystack []Cell) (bool, int) {
 	return false, -1
 
 }
-
 
 // findAllSubslices returns a list of indices of all position of subslice xs in
 // slice ys, returns [] if xs is not in ys
@@ -285,34 +283,6 @@ func SwitchPlayer(player Cell) Cell {
 	return X
 }
 
-// TestWin determines whether requested player guaranteed to win the game from
-// the current board position (very useful for quick position evaluation
-// without performing thorough analysis)
-//func TestWin(board *BoardDescription, options AIOptions, player Cell) (bool, Interval) {
-//
-//	MAYBE_WIN := options.winSequenceLength - 2
-//	WILL_WIN := options.winSequenceLength - 1
-//
-//	for k, v := range FindAllChains(board, MAYBE_WIN, WILL_WIN, player) {
-//
-//		if k == MAYBE_WIN {
-//			// we have to ensure that the given position will lead to win 100% of
-//			// all the cases
-//			for _, interval := range v {
-//				stCol, stRow := interval.col1, interval.row1
-//				endCol, endRow := interval.col2, interval.row2
-//			}
-//
-//		} else if k == WILL_WIN {
-//			// given player will 100% win next move from this position
-//			return true, v
-//		}
-//	}
-//
-//	return false, Interval{}
-//
-//}
-
 // MonteCarloEval uses Monte-Carlo method to assess current position, intended
 // to be used as static evaluator for leaf nodes
 func MonteCarloEval(board *BoardDescription, options AIOptions, trials, maxMoves int, whoMoves Cell) float64 {
@@ -330,29 +300,25 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, trials, maxMoves
 
 		for i := 0; i < maxMoves; i++ {
 
+			col, row, _:= clonedBoard.FromLinear(free[0])
+			clonedBoard.SetCell(col, row, whoMoves)
+			free = free[1:]
+
 			// check whether we have guaranteed winning position
 			results := FindPattern(clonedBoard, options.winSequenceLength, whoMoves)
-			fmt.Println(clonedBoard)
-			fmt.Println(results)
 
 			if len(results) != 0 {
 				if whoMoves == options.AIPlayer {
 					// computer will win in next move(s)
 					ai_wins++
-					fmt.Println(i)
 					break
 				} else {
 					// opponent will win in next move(s)
 					player_wins++
-					fmt.Println("Oh no!")
 					break
 				}
 			}
 
-			col, row, _:= clonedBoard.FromLinear(free[0])
-			clonedBoard.SetCell(col, row, whoMoves)
-
-			free = free[1:]
 			whoMoves = SwitchPlayer(whoMoves)
 		}
 
