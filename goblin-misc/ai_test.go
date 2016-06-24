@@ -236,3 +236,28 @@ func TestMonteCarloBestMove(t *testing.T) {
 	assertEqual(t, result, Move{4, 1})
 
 }
+
+
+
+// Some benchmarks
+
+func BenchmarkMonteCarloBestMove10(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		board := NewBoard(19, 19)
+		MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 10 * 10, 10, X)
+	}
+}
+
+func BenchmarkMonteCarloBestMove50(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		board := NewBoard(19, 19)
+		MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 10 * 10, 50, X)
+	}
+}
+
+func BenchmarkMonteCarloBestMove100(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		board := NewBoard(19, 19)
+		MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 10 * 10, 100, X)
+	}
+}
