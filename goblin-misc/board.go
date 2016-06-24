@@ -20,7 +20,7 @@ const (
 type Set map[interface{}]bool
 
 // Cell structure defines possible cell state, it can be eiather X, O or EMPTY
-type Cell rune
+type Cell byte
 
 func randomCell(cellValues ...Cell) Cell {
 	idx := rand.Intn(minIntPair(len(cellValues), 3))
