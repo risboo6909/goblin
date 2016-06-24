@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"github.com/nsf/termbox-go"
-	"github.com/risboo6909/goblin/goblin-misc"
+	"github.com/risboo6909/goblin/misc"
 )
 
 // Board visual attributes
