@@ -169,12 +169,13 @@ func scanLine(line []Cell, col, row int, patterns [][]Cell, player Cell, directi
 	return result
 }
 
-// MakePatterns generates winning patterns of specified length to search on a board
-func MakePatterns(targetLen int, p Cell) [][]Cell {
+// patternBuilder is a helper function which returns another
+// function to effectively generate sequences to scan on a board with caching
+func patternBuilder() func(int, Cell) [][]Cell {
 
 	winningPatterns := [][]Cell{}
 
-	return func () [][]Cell {
+	return func (targetLen int, p Cell) [][]Cell {
 
 		if len(winningPatterns) == 0 {
 
@@ -200,9 +201,13 @@ func MakePatterns(targetLen int, p Cell) [][]Cell {
 
 		return winningPatterns
 
-	}()
+	}
 
 }
+
+// MakePatterns generates winning patterns of specified length to search on a board
+var MakePatterns = patternBuilder()
+
 
 // FindPattern finds vertical, horizontal or diagonal patterns generated using MakePatterns
 func FindPattern(board *BoardDescription, seqLen int, player Cell) []Interval {
