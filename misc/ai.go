@@ -363,6 +363,7 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 
 		for i := 0;; i++ {
 
+			// if there is a 100% winner on this trial
 			winner := checkWin(clonedBoard, options)
 
 			if winner != E {

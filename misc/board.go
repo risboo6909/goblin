@@ -68,9 +68,7 @@ func NewBoard(cellsHoriz, cellsVert int) *BoardDescription {
 // CloneBoard clones an existing board
 func CloneBoard(p *BoardDescription) *BoardDescription {
 	newBoard := NewBoard(p.CellsHoriz, p.CellsVert)
-	for i, v := range(p.Content) {
-		newBoard.Content[i] = v
-	}
+	copy(newBoard.Content, p.Content)
 	return newBoard
 }
 
