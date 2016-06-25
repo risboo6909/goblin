@@ -174,26 +174,34 @@ func MakePatterns(targetLen int, p Cell) [][]Cell {
 
 	winningPatterns := [][]Cell{}
 
-	// test all in a row (for instance: X, X, X, X, X is a winner)
-	winningPatterns = append(winningPatterns, make([]Cell, targetLen))
+	return func () [][]Cell {
 
-	// test all minus 1 in a row
-	winningPatterns = append(winningPatterns, make([]Cell, targetLen + 1))
+		if len(winningPatterns) == 0 {
 
-	// fill all patterns patterns with player cells
-	for i := 0; i < 2; i++ {
-		for j := 0; j < targetLen + 2; j++ {
-			if len(winningPatterns[i]) > j {
-				winningPatterns[i][j] = p
+			// test all in a row (for instance: X, X, X, X, X is a winner)
+			winningPatterns = append(winningPatterns, make([]Cell, targetLen))
+
+			// test all minus 1 in a row
+			winningPatterns = append(winningPatterns, make([]Cell, targetLen + 1))
+
+			// fill all patterns patterns with player cells
+			for i := 0; i < 2; i++ {
+				for j := 0; j < targetLen + 2; j++ {
+					if len(winningPatterns[i]) > j {
+						winningPatterns[i][j] = p
+					}
+				}
 			}
+
+			// add empty cells
+			winningPatterns[1][0] = E
+			winningPatterns[1][len(winningPatterns[1]) - 1] = E
 		}
-	}
 
-	// add empty cells
-	winningPatterns[1][0] = E
-	winningPatterns[1][len(winningPatterns[1]) - 1] = E
+		return winningPatterns
 
-	return winningPatterns
+	}()
+
 }
 
 // FindPattern finds vertical, horizontal or diagonal patterns generated using MakePatterns
@@ -344,8 +352,10 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 			winner := checkWin(clonedBoard, options)
 
 			if winner != E {
+
 				updateScores(clonedBoard, opponent, winner, scores)
 				break
+
 			}
 
 			if i < iterations {
