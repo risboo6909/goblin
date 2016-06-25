@@ -173,42 +173,42 @@ func scanLine(line []Cell, col, row int, patterns [][]Cell, player Cell, directi
 // function to effectively generate sequences to scan on a board with caching
 func patternBuilder() func(int, Cell) [][]Cell {
 
-	winningPatterns := make(map[struct{int; Cell}][][]Cell)
+	winningSequences := make(map[struct{ int; Cell}][][]Cell)
 
 	return func (targetLen int, p Cell) [][]Cell {
 
 		key := struct{int; Cell}{targetLen, p}
 
-		pattern, ok := winningPatterns[key]
+		sequences, ok := winningSequences[key]
 
 		if !ok {
 
-			winningPatterns[key] = [][]Cell{}
+			winningSequences[key] = [][]Cell{}
 
 			// test all in a row (for instance: X, X, X, X, X is a winner)
-			winningPatterns[key] = append(winningPatterns[key], make([]Cell, targetLen))
+			winningSequences[key] = append(winningSequences[key], make([]Cell, targetLen))
 
 			// test all minus 1 in a row
-			winningPatterns[key] = append(winningPatterns[key], make([]Cell, targetLen + 1))
+			winningSequences[key] = append(winningSequences[key], make([]Cell, targetLen + 1))
 
 			// fill all patterns patterns with player cells
 			for i := 0; i < 2; i++ {
 				for j := 0; j < targetLen + 2; j++ {
-					if len(winningPatterns[key][i]) > j {
-						winningPatterns[key][i][j] = p
+					if len(winningSequences[key][i]) > j {
+						winningSequences[key][i][j] = p
 					}
 				}
 			}
 
 			// add empty cells
-			winningPatterns[key][1][0] = E
-			winningPatterns[key][1][len(winningPatterns[key][1]) - 1] = E
+			winningSequences[key][1][0] = E
+			winningSequences[key][1][len(winningSequences[key][1]) - 1] = E
 
-			pattern = winningPatterns[key]
+			sequences = winningSequences[key]
 
 		}
 
-		return pattern
+		return sequences
 
 	}
 
