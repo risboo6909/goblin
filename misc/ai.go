@@ -136,7 +136,7 @@ func findAllSubslices(xs, ys []Cell) []int {
 	return indices
 }
 
-// scanLine accept a slice (horizontal, vertical or diagonal), col and row of slice star in board coordinates,
+// scanLine accept a slice (horizontal, vertical or diagonal), col and row of slice start in board coordinates,
 // patterns list to find and returns all intervals which match given patterns
 func scanLine(line []Cell, col, row int, patterns [][]Cell, player Cell, direction ScanDirection) []Interval {
 
@@ -413,7 +413,7 @@ func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxDepth, tr
 // Function to choose the best move from a given position
 func MakeMove(board *BoardDescription, options AIOptions) {
 	// Use Monte-Carlo for static evaluation
-	bestMove, _ := MonteCarloBestMove(board, options, board.NumCells(),
+	bestMove, _ := MonteCarloBestMove(board, options, board.NumFreeCells(),
 		300, options.AIPlayer)
 
 	board.SetCell(bestMove.col, bestMove.row, options.AIPlayer)

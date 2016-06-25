@@ -105,6 +105,17 @@ func (p *BoardDescription) NumCells() int {
 	return p.CellsHoriz * p.CellsVert
 }
 
+// NumFreeCells returns number of free cells on a board
+func (p *BoardDescription) NumFreeCells() int {
+	freeCnt := 0
+	for _, v := range p.Content {
+		if v == E {
+			freeCnt++
+		}
+	}
+	return freeCnt
+}
+
 // GetWidth returns the actual width of a board
 func (p *BoardDescription) GetWidth() int {
 	return (p.CellsHoriz - 1) * 4
