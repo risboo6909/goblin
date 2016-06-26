@@ -49,7 +49,7 @@ func generateSessionId(n int) string {
 	return string(b)
 }
 
-func CreateNewSession(boardSide int, player Cell) Session {
+func CreateNewSession(boardSide, winSeqLen int, player Cell) Session {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -57,7 +57,7 @@ func CreateNewSession(boardSide int, player Cell) Session {
 		NewBoard(boardSide, boardSide),
 
 		AIOptions{switchPlayer(player),
-			  5,
+			  winSeqLen,
 		          4},
 
 		generateSessionId(10),

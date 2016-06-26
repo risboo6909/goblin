@@ -3,6 +3,7 @@ package misc
 import (
 	"math/rand"
 	"math"
+	"fmt"
 )
 
 // KMPPrefixTable is a helper function for KMPSearch that generates
@@ -237,32 +238,9 @@ func switchPlayer(player Cell) Cell {
 	return X
 }
 
-func checkWin(board *BoardDescription, opt AIOptions) Cell {
-
-	// check whether we have guaranteed winning position
-
-	opponent := switchPlayer(opt.AIPlayer)
-
-	pattern := MakePatterns(opt.winSequenceLength, opt.AIPlayer)
-	tmp := FindPattern(board, opt.AIPlayer, pattern)
-
-	if len(tmp) != 0 {
-		return opt.AIPlayer
-	}
-
-	pattern = MakePatterns(opt.winSequenceLength, opponent)
-	tmp = FindPattern(board, opponent, pattern)
-
-	if len(tmp) != 0 {
-		return opponent
-	}
-
-	return E
-}
-
-// isGameOver determines whether there is N in-a-row Xs or Os on a board
+// checkWin determines whether there is N in-a-row Xs or Os on a board
 // which would mean that there is a winner and the game is over
-func isGameOver(board *BoardDescription, opt AIOptions, player Cell) (bool, []Interval) {
+func checkWin(board *BoardDescription, opt AIOptions, player Cell) (bool, []Interval) {
 
 	pattern := MakePatterns(opt.winSequenceLength, player)
 
@@ -276,7 +254,7 @@ func isGameOver(board *BoardDescription, opt AIOptions, player Cell) (bool, []In
 }
 
 // updateScores updates scores array according to Monte-Carlo outcomes
-func updateScores(board *BoardDescription, opponent, winner Cell, scores []float64) {
+func updateScores(board *BoardDescription, opponent, winner Cell, scores []int) {
 
 	for idx := 0; idx < board.NumCells(); idx++ {
 
@@ -305,7 +283,7 @@ func updateScores(board *BoardDescription, opponent, winner Cell, scores []float
 func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials int, movesFirst Cell) []float64 {
 
 	opponent := switchPlayer(options.AIPlayer)
-	scores := make([]float64, board.NumCells())
+	scores := make([]int, board.NumCells())
 
 	// freeIndices are always the same
 	freeIndices := board.GetFreeIndices()
@@ -319,27 +297,29 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 		free := ShuffleIntSlice(freeIndices)
 
 		// compute number of iterations for each trial
-		iterations := minIntPair(minIntPair(board.NumCells(), maxDepth), len(free))
+		iterations := minIntPair(minIntPair(board.NumFreeCells(), maxDepth), len(free))
 
 		whoMoves := movesFirst
 
-		for i := 0;; i++ {
+		for i := 1;; i++ {
+
+			clonedBoard.SetCellLinear(free[0], whoMoves)
 
 			// if there is a 100% winner on this trial
-			winner := checkWin(clonedBoard, options)
+			//winner := checkWin(clonedBoard, options)
 
-			if winner != E {
+			winner, _ := checkWin(clonedBoard, options, whoMoves)
 
-				updateScores(clonedBoard, opponent, winner, scores)
+			if winner {
+
+				updateScores(clonedBoard, opponent, whoMoves, scores)
 				break
 
 			}
 
 			if i < iterations {
-				clonedBoard.SetCellLinear(free[0], whoMoves)
 				whoMoves = switchPlayer(whoMoves)
 				free = free[1:]
-
 			} else {
 				break
 			}
@@ -347,7 +327,20 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 
 	}
 
-	return scores
+	// normalize scores
+
+	sum := 0
+	scoresNorm := make([]float64, len(scores))
+
+	for _, v := range scores {
+		sum += v
+	}
+
+	for idx, v := range scores {
+		scoresNorm[idx] = float64(v) / float64(sum)
+	}
+
+	return scoresNorm
 }
 
 // MonteCarloBestMove search for a best move by using Monte-Carlo evaluation, accepts board description, ai options
@@ -381,7 +374,7 @@ func MinMaxEval(board *BoardDescription, freeCells []int, movesMade []LinearMove
 		board = CloneBoard(board).FillBoardLinear(movesMade)
 
 		bestMove, bestVal = MonteCarloBestMove(board, options, board.NumFreeCells(),
-			4, switchPlayer(whoMoves))
+			100, switchPlayer(whoMoves))
 
 		return
 	}
@@ -411,21 +404,21 @@ func MakeMove(board *BoardDescription, options AIOptions) (Cell, []Interval) {
 
 	opponent := switchPlayer(options.AIPlayer)
 
-	playerWon, intervals := isGameOver(board, options, opponent)
+	playerWon, intervals := checkWin(board, options, opponent)
 
 	if playerWon {
 		return opponent, intervals
 	}
-
-//	movesMade := make([]LinearMove, 0, board.NumFreeCells())
-//	MinMaxEval(board, board.GetFreeIndices(), movesMade, options.AIPlayer, options, 1, false)
+	//
+	//movesMade := make([]LinearMove, 0, board.NumFreeCells())
+	//MinMaxEval(board, board.GetFreeIndices(), movesMade, options.AIPlayer, options, 1, false)
 
 	bestMove, _ := MonteCarloBestMove(board, options, board.NumFreeCells(),
-		300, options.AIPlayer)
+		4000, options.AIPlayer)
 
 	board.SetCell(bestMove.Col, bestMove.Row, options.AIPlayer)
 
-	AIWon, intervals := isGameOver(board, options, options.AIPlayer)
+	AIWon, intervals := checkWin(board, options, options.AIPlayer)
 
 	if AIWon {
 		return options.AIPlayer, intervals
