@@ -5,50 +5,6 @@ import (
 	"math"
 )
 
-// Interval represents indexes of start and end of an n-length chain`
-type Interval struct {
-
-	direction int
-
-	col1, row1 int
-	col2, row2 int
-}
-
-type ScanDirection uint8
-
-type Move struct {
-	col, row int
-}
-
-type AIOptions struct {
-
-	AIPlayer Cell
-
-	winSequenceLength int
-
-	maxDepth int
-
-}
-
-const (
-	horizontal = iota
-	vertical
-
-	// LR means that we are scanning from the left side of the board
-	// towards its right side
-	LRDiagonal
-
-	// RL means that we are scanning from the right side of the board
-	// towards its left side
-	RLDiagonal
-)
-
-const (
-	AI_WINS = 10
-	AI_LOSES = -10
-	DRAW = 0
-)
-
 // KMPPrefixTable is a helper function for KMPSearch that generates
 // prefix table for Knuth-Morris-Pratt algorithm
 func KMPPrefixTable(pattern []Cell) []int {
@@ -149,18 +105,20 @@ func scanLine(line []Cell, col, row int, patterns [][]Cell, player Cell, directi
 			seqLen := len(pattern)
 
 			if direction == horizontal {
-				result = append(result, Interval{horizontal, position, row, position + seqLen - 1, row})
+				result = append(result, Interval{horizontal, CellPosition{position, row},
+					CellPosition{position + seqLen - 1, row}})
 
 			} else if direction == vertical {
-				result = append(result, Interval{vertical, col, position, col, position + seqLen - 1})
+				result = append(result, Interval{vertical, CellPosition{col, position},
+					CellPosition{col, position + seqLen - 1}})
 
 			} else if direction == LRDiagonal {
-				result = append(result, Interval{LRDiagonal, col + position,
-					row + position, col + position + seqLen - 1, row + position + seqLen - 1})
+				result = append(result, Interval{LRDiagonal, CellPosition{col + position,
+					row + position}, CellPosition{col + position + seqLen - 1, row + position + seqLen - 1}})
 
 			} else if direction == RLDiagonal {
-				result = append(result, Interval{RLDiagonal, col - position,
-					row + position, col - position - seqLen + 1, row + position + seqLen - 1})
+				result = append(result, Interval{RLDiagonal, CellPosition{col - position,
+					row + position}, CellPosition{col - position - seqLen + 1, row + position + seqLen - 1}})
 			}
 
 		}
@@ -219,15 +177,13 @@ var MakePatterns = patternBuilder()
 
 
 // FindPattern finds vertical, horizontal or diagonal patterns generated using MakePatterns
-func FindPattern(board *BoardDescription, seqLen int, player Cell) []Interval {
+func FindPattern(board *BoardDescription, player Cell, patterns [][]Cell) []Interval {
 
 	var (
 		matchHoriz []Interval
 		matchVert  []Interval
 		matchDiag  []Interval
 	)
-
-	patterns := MakePatterns(seqLen, player)
 
 	// scan horizontal first
 
@@ -305,15 +261,30 @@ func checkWin(board *BoardDescription, opt AIOptions) Cell {
 
 	opponent := switchPlayer(opt.AIPlayer)
 
-	if len(FindPattern(board, opt.winSequenceLength, opt.AIPlayer)) != 0 {
+	patterns := MakePatterns(opt.winSequenceLength, opt.AIPlayer)
+	if len(FindPattern(board, opt.AIPlayer, patterns)) != 0 {
 		return opt.AIPlayer
 	}
 
-	if len(FindPattern(board, opt.winSequenceLength, opponent)) != 0 {
+	patterns = MakePatterns(opt.winSequenceLength, opponent)
+	if len(FindPattern(board, opponent, patterns)) != 0 {
 		return opponent
 	}
 
 	return E
+}
+
+func isGameOver(board *BoardDescription, opt AIOptions, player Cell) (bool, Interval) {
+
+	pattern := [][]Cell{MakePatterns(opt.winSequenceLength, player)[0]}
+
+	intervals := FindPattern(board, player, pattern)
+
+	if len(intervals) != 0 {
+		return true, intervals[0]
+	}
+
+	return false, Interval{}
 }
 
 // updateScores updates scores array according to Monte-Carlo outcomes
@@ -391,7 +362,7 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 // MonteCarloBestMove search for a best move by using Monte-Carlo evaluation, accepts board description, ai options
 // struct, maxDepth - is a maximum depth to scan, trials - number of trial and whoMoves which states who is going
 // to make next move
-func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxDepth, trials int, whoMoves Cell) (Move, float64) {
+func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxDepth, trials int, whoMoves Cell) (CellPosition, float64) {
 
 	scores := MonteCarloEval(board, options, maxDepth, trials, whoMoves)
 
@@ -406,15 +377,32 @@ func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxDepth, tr
 
 	col, row, _ := board.FromLinear(bestMove)
 
-	return Move{col, row}, bestValue
+	return CellPosition{col, row}, bestValue
 }
 
 
 // Function to choose the best move from a given position
-func MakeMove(board *BoardDescription, options AIOptions) {
+func MakeMove(board *BoardDescription, options AIOptions) (Cell, Interval) {
 	// Use Monte-Carlo for static evaluation
+
+	opponent := switchPlayer(options.AIPlayer)
+
+	playerWon, interval := isGameOver(board, options, opponent)
+
+	if playerWon {
+		return opponent, interval
+	}
+
 	bestMove, _ := MonteCarloBestMove(board, options, board.NumFreeCells(),
 		300, options.AIPlayer)
 
 	board.SetCell(bestMove.col, bestMove.row, options.AIPlayer)
+
+	AIWon, interval := isGameOver(board, options, options.AIPlayer)
+
+	if AIWon {
+		return options.AIPlayer, interval
+	}
+
+	return E, Interval{}
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/nsf/termbox-go"
 	"github.com/risboo6909/goblin/misc"
+	"fmt"
 )
 
 // Board visual attributes
@@ -173,8 +174,14 @@ func drawCursor(board *DrawableBoard, cursor Cursor) {
 		rune(val), cursor.FgColor, cursor.BgColor)
 }
 
+func drawInterval(interval misc.Interval) {
+	if interval != (misc.Interval{}) {
+		fmt.Println(interval.Unfold())
+	}
+}
+
 // DrawBoard draws ASCII game board
-func DrawBoard(board *DrawableBoard, cursor Cursor) {
+func DrawBoard(board *DrawableBoard, cursor Cursor, interval misc.Interval) {
 
 	x := board.X + 2
 	y := board.Y + 1
@@ -188,5 +195,8 @@ func DrawBoard(board *DrawableBoard, cursor Cursor) {
 	drawLeftAndRight(x+board.GetWidth(), y, board, '┤', false)
 
 	fillBoard(board)
+
+	drawInterval(interval)
+
 	drawCursor(board, cursor)
 }

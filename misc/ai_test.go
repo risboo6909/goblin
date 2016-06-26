@@ -27,11 +27,11 @@ func TestFindChainDiagonal(t *testing.T) {
 	board.SetCell(2, 17, X)
 	board.SetCell(3, 18, X)
 
-	result := FindPattern(board, 4, X)
+	result := FindPattern(board, X, MakePatterns(4, X))
 
-	assertEqual(t, result[0], Interval{LRDiagonal, 2, 2, 5, 5})
-	assertEqual(t, result[1], Interval{LRDiagonal, 7, 3, 10, 6})
-	assertEqual(t, result[2], Interval{LRDiagonal, 0, 15, 3, 18})
+	assertEqual(t, result[0], Interval{LRDiagonal, CellPosition{2, 2}, CellPosition{5, 5}})
+	assertEqual(t, result[1], Interval{LRDiagonal, CellPosition{7, 3}, CellPosition{10, 6}})
+	assertEqual(t, result[2], Interval{LRDiagonal, CellPosition{0, 15}, CellPosition{3, 18}})
 
 	// Right-to-left diagonal sequences
 
@@ -58,11 +58,11 @@ func TestFindChainDiagonal(t *testing.T) {
 	board.SetCell(6, 4, O)
 	board.SetCell(7, 3, O)
 
-	result = FindPattern(board, 6, O)
+	result = FindPattern(board, O, MakePatterns(6, O))
 
-	assertEqual(t, result[0], Interval{RLDiagonal, 7, 3, 2, 8})
-	assertEqual(t, result[1], Interval{RLDiagonal, 5, 13, 0, 18})
-	assertEqual(t, result[2], Interval{RLDiagonal, 18, 13, 13, 18})
+	assertEqual(t, result[0], Interval{RLDiagonal, CellPosition{7, 3}, CellPosition{2, 8}})
+	assertEqual(t, result[1], Interval{RLDiagonal, CellPosition{5, 13}, CellPosition{0, 18}})
+	assertEqual(t, result[2], Interval{RLDiagonal, CellPosition{18, 13}, CellPosition{13, 18}})
 
 }
 
@@ -104,15 +104,15 @@ func TestFindChainHorizVert(t *testing.T) {
 	board.SetCell(18, 17, X)
 	board.SetCell(18, 18, X)
 
-	result := FindPattern(board, 4, X)
+	result := FindPattern(board, X, MakePatterns(4, X))
 
-	assertEqual(t, result[0], Interval{horizontal, 0, 0, 3, 0})
-	assertEqual(t, result[1], Interval{horizontal, 5, 0, 8, 0})
-	assertEqual(t, result[2], Interval{horizontal, 15, 18, 18, 18})
+	assertEqual(t, result[0], Interval{horizontal, CellPosition{0, 0}, CellPosition{3, 0}})
+	assertEqual(t, result[1], Interval{horizontal, CellPosition{5, 0}, CellPosition{8, 0}})
+	assertEqual(t, result[2], Interval{horizontal, CellPosition{15, 18}, CellPosition{18, 18}})
 
-	assertEqual(t, result[3], Interval{vertical, 0, 0, 0, 3})
-	assertEqual(t, result[4], Interval{vertical, 5, 0, 5, 3})
-	assertEqual(t, result[5], Interval{vertical, 18, 15, 18, 18})
+	assertEqual(t, result[3], Interval{vertical, CellPosition{0, 0}, CellPosition{0, 3}})
+	assertEqual(t, result[4], Interval{vertical, CellPosition{5, 0}, CellPosition{5, 3}})
+	assertEqual(t, result[5], Interval{vertical, CellPosition{18, 15}, CellPosition{18, 18}})
 
 }
 
@@ -139,16 +139,17 @@ func TestFindAllChains(t *testing.T) {
 	board.SetCell(15, 0, X)
 	board.SetCell(16, 0, X)
 
-	result := FindPattern(board, 5, X)
+	result := FindPattern(board, X, MakePatterns(5, X))
 
 	if !reflect.DeepEqual(result, []Interval {
-		Interval{horizontal, 4,0,9,0}, Interval{RLDiagonal, 6,10,2,14}}) {
+		Interval{horizontal, CellPosition{4,0}, CellPosition{9,0}},
+		Interval{RLDiagonal, CellPosition{6,10},CellPosition{2,14}}}) {
 		t.Fatalf("Error in FindAllChains")
 	}
 
 	board = NewBoard(19, 19)
 
-	result = FindPattern(board, 3, O)
+	result = FindPattern(board, O, MakePatterns(3, O))
 
 	// return empty map if nothing has been found
 	if len(result) > 0 {
@@ -162,9 +163,9 @@ func TestFindAllChains(t *testing.T) {
 	board.SetCell(3, 3, X)
 	board.SetCell(4, 4, X)
 
-	result = FindPattern(board, 5, X)
+	result = FindPattern(board, X, MakePatterns(5, X))
 
-	assertEqual(t, result[0], Interval{LRDiagonal, 0, 0, 5, 5})
+	assertEqual(t, result[0], Interval{LRDiagonal, CellPosition{0, 0}, CellPosition{5, 5}})
 }
 
 func TestShuffleIntSlice(t *testing.T) {
@@ -209,7 +210,7 @@ func TestMonteCarloBestMove(t *testing.T) {
 	result, _ := MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, O)
 
 	// Yeahh, X will certainly w in!
-	assertEqual(t, result, Move{0, 0})
+	assertEqual(t, result, CellPosition{0, 0})
 
 	board = NewBoard(6, 6)
 
@@ -221,7 +222,7 @@ func TestMonteCarloBestMove(t *testing.T) {
 	result, _ = MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, O)
 
 	// Better luck next time, O was really good in this game
-	assertEqual(t, result, Move{0, 0})
+	assertEqual(t, result, CellPosition{0, 0})
 
 	board = NewBoard(6, 6)
 
@@ -233,7 +234,7 @@ func TestMonteCarloBestMove(t *testing.T) {
 	result, _ = MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, X)
 
 	// The only move for X is 4, 1
-	assertEqual(t, result, Move{4, 1})
+	assertEqual(t, result, CellPosition{4, 1})
 
 }
 

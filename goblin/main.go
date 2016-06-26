@@ -82,7 +82,9 @@ func update() {
 				gameSession.MakeMove()
 			}
 		}
+
 	}
+
 }
 
 func paint() {
@@ -92,7 +94,7 @@ func paint() {
 	switch gameState {
 
 	case StateGameplay:
-		ui.DrawBoard(board, cursor)
+		ui.DrawBoard(board, cursor, gameSession.Interval)
 	}
 
 	termbox.Flush()
