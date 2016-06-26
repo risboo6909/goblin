@@ -6,6 +6,7 @@ import (
 	"github.com/nsf/termbox-go"
 	"github.com/risboo6909/goblin/misc"
 	"github.com/risboo6909/goblin/ui"
+	"time"
 )
 
 var (
@@ -21,13 +22,12 @@ var (
 		FgColor: termbox.ColorGreen, BgColor: termbox.ColorWhite}
 )
 
-func update() {
+func update(ev termbox.Event) {
 
 	switch gameState {
 
 	case StateGameplay:
 
-		ev := termbox.PollEvent()
 		switch ev.Type {
 
 		case termbox.EventKey:
@@ -94,7 +94,7 @@ func paint() {
 	switch gameState {
 
 	case StateGameplay:
-		ui.DrawBoard(board, cursor, gameSession.Interval)
+		ui.DrawBoard(board, cursor, gameSession.Intervals)
 	}
 
 	termbox.Flush()
@@ -109,9 +109,23 @@ func main() {
 
 	defer termbox.Close()
 
+	eventQ := make(chan termbox.Event)
+	go func() {
+		for {
+			eventQ <- termbox.PollEvent()
+		}
+	}()
+
+	paintTick := time.NewTicker(100 * time.Millisecond)
+
 	for {
-		paint()
-		update()
+		select {
+		case ev := <-eventQ:
+			update(ev)
+			paint()
+		case <-paintTick.C:
+			paint()
+		}
 	}
 
 }

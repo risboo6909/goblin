@@ -5,7 +5,7 @@ import (
 
 	"github.com/nsf/termbox-go"
 	"github.com/risboo6909/goblin/misc"
-	"fmt"
+	"time"
 )
 
 // Board visual attributes
@@ -174,14 +174,41 @@ func drawCursor(board *DrawableBoard, cursor Cursor) {
 		rune(val), cursor.FgColor, cursor.BgColor)
 }
 
-func drawInterval(interval misc.Interval) {
-	if interval != (misc.Interval{}) {
-		fmt.Println(interval.Unfold())
+// mark winning sequences on a board
+func drawInterval() func(*DrawableBoard, []misc.Interval) {
+
+	lastTime := time.Now().UnixNano()
+	visible := true
+
+	var BLINK_DELAY int64 = int64(300 * time.Millisecond)
+
+	helper := func(board *DrawableBoard, intervals []misc.Interval) {
+
+		ts := time.Now().UnixNano()
+
+		if visible && ts - lastTime < BLINK_DELAY {
+
+			for _, interval := range intervals {
+				for _, coord := range interval.Unfold() {
+					scrX, scrY := getScrX(board, coord.Col), getScrY(board, coord.Row)
+					// TODO: Make colors customizable
+					termbox.SetCell(scrX, scrY, rune(board.GetCell(coord.Col, coord.Row)),
+						termbox.ColorWhite, termbox.ColorBlack)
+				}
+			}
+
+		} else if ts - lastTime >= BLINK_DELAY {
+			visible, lastTime = !visible, ts
+		}
+
 	}
+	return helper
 }
 
+var drawIntervalBlink = drawInterval()
+
 // DrawBoard draws ASCII game board
-func DrawBoard(board *DrawableBoard, cursor Cursor, interval misc.Interval) {
+func DrawBoard(board *DrawableBoard, cursor Cursor, intervals []misc.Interval) {
 
 	x := board.X + 2
 	y := board.Y + 1
@@ -196,7 +223,7 @@ func DrawBoard(board *DrawableBoard, cursor Cursor, interval misc.Interval) {
 
 	fillBoard(board)
 
-	drawInterval(interval)
+	drawIntervalBlink(board, intervals)
 
 	drawCursor(board, cursor)
 }
