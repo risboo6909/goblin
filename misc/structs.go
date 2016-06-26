@@ -44,7 +44,7 @@ func (interval Interval) Unfold() []CellPosition {
 	case vertical:
 		result = make([]CellPosition, interval.To.Row - interval.From.Row + 1)
 		for idx := 0; idx < interval.To.Row - interval.From.Row + 1; idx++ {
-			result[idx] = CellPosition{interval.From.Col, interval.To.Row + idx}
+			result[idx] = CellPosition{interval.From.Col, interval.From.Row + idx}
 		}
 		break
 	}
