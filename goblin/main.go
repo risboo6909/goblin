@@ -78,8 +78,9 @@ func update(ev termbox.Event) {
 				// can't modify occupied cell
 				if board.GetCell(cursor.Col, cursor.Row) == misc.E {
 					board.SetCell(cursor.Col, cursor.Row, misc.X)
+				} else {
+					gameSession.MakeMove()
 				}
-				gameSession.MakeMove()
 			}
 		}
 
