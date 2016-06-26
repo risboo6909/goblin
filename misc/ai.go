@@ -79,11 +79,13 @@ func findAllSubslices(xs, ys []Cell) []int {
 
 	for {
 		found, idx := KMPSearch(xs, ys)
+
 		if found {
 			delta := idx + len(xs) - 1
 			indices = append(indices, offset+idx)
 			ys = ys[delta:]
 			offset += delta
+
 		} else {
 			break
 		}
@@ -94,34 +96,31 @@ func findAllSubslices(xs, ys []Cell) []int {
 
 // scanLine accept a slice (horizontal, vertical or diagonal), col and row of slice start in board coordinates,
 // patterns list to find and returns all intervals which match given patterns
-func scanLine(line []Cell, col, row int, patterns [][]Cell, player Cell, direction ScanDirection) []Interval {
+func scanLine(line []Cell, col, row int, pattern []Cell, player Cell, direction ScanDirection) []Interval {
 
 	result := []Interval{}
 
-	for _, pattern := range patterns {
+	for _, position := range findAllSubslices(pattern, line) {
 
-		for _, position := range findAllSubslices(pattern, line) {
+		seqLen := len(pattern)
 
-			seqLen := len(pattern)
+		if direction == horizontal {
+			result = append(result, Interval{horizontal, CellPosition{position, row},
+				CellPosition{position + seqLen - 1, row}})
 
-			if direction == horizontal {
-				result = append(result, Interval{horizontal, CellPosition{position, row},
-					CellPosition{position + seqLen - 1, row}})
+		} else if direction == vertical {
+			result = append(result, Interval{vertical, CellPosition{col, position},
+				CellPosition{col, position + seqLen - 1}})
 
-			} else if direction == vertical {
-				result = append(result, Interval{vertical, CellPosition{col, position},
-					CellPosition{col, position + seqLen - 1}})
+		} else if direction == LRDiagonal {
+			result = append(result, Interval{LRDiagonal, CellPosition{col + position,
+				row + position}, CellPosition{col + position + seqLen - 1, row + position + seqLen - 1}})
 
-			} else if direction == LRDiagonal {
-				result = append(result, Interval{LRDiagonal, CellPosition{col + position,
-					row + position}, CellPosition{col + position + seqLen - 1, row + position + seqLen - 1}})
-
-			} else if direction == RLDiagonal {
-				result = append(result, Interval{RLDiagonal, CellPosition{col - position,
-					row + position}, CellPosition{col - position - seqLen + 1, row + position + seqLen - 1}})
-			}
-
+		} else if direction == RLDiagonal {
+			result = append(result, Interval{RLDiagonal, CellPosition{col - position,
+				row + position}, CellPosition{col - position - seqLen + 1, row + position + seqLen - 1}})
 		}
+
 	}
 
 	return result
@@ -129,47 +128,30 @@ func scanLine(line []Cell, col, row int, patterns [][]Cell, player Cell, directi
 
 // patternBuilder is a helper function which returns another
 // function to effectively generate sequences to scan on a board with caching
-func patternBuilder() func(int, Cell) [][]Cell {
+func patternBuilder() func(int, Cell) []Cell {
 
-	winningSequences := make(map[struct{int; Cell}][][]Cell)
+	winningSequences := make(map[struct{int; Cell}][]Cell)
 
-	return func (targetLen int, p Cell) [][]Cell {
+	return func (targetLen int, p Cell) []Cell {
 
 		key := struct{int; Cell}{targetLen, p}
 
-		sequences, ok := winningSequences[key]
+		sequence, ok := winningSequences[key]
 
 		if !ok {
 
-			winningSequences[key] = [][]Cell{}
+			// test all in a row (for instance: X, X, X, X, X is a current move winner)
+			winningSequences[key] = make([]Cell, targetLen)
 
-			// test all in a row (for instance: X, X, X, X, X is a winner)
-			winningSequences[key] = append(winningSequences[key], make([]Cell, targetLen))
-
-			// test all minus 1 in a row
-			winningSequences[key] = append(winningSequences[key], make([]Cell, targetLen + 1))
-
-			// fill all patterns patterns with player cells
-			for i := 0; i < 2; i++ {
-				for j := 0; j < targetLen + 2; j++ {
-					if len(winningSequences[key][i]) > j {
-						winningSequences[key][i][j] = p
-					}
-				}
+			for j := 0; j < targetLen; j++ {
+				winningSequences[key][j] = p
 			}
 
-			// add empty cells
-			winningSequences[key][1][0] = E
-			winningSequences[key][1][len(winningSequences[key][1]) - 1] = E
-
-			sequences = winningSequences[key]
-
+			sequence = winningSequences[key]
 		}
 
-		return sequences
-
+		return sequence
 	}
-
 }
 
 // MakePatterns generates winning patterns of specified length to search on a board
@@ -177,7 +159,7 @@ var MakePatterns = patternBuilder()
 
 
 // FindPattern finds vertical, horizontal or diagonal patterns generated using MakePatterns
-func FindPattern(board *BoardDescription, player Cell, patterns [][]Cell) []Interval {
+func FindPattern(board *BoardDescription, player Cell, pattern []Cell) []Interval {
 
 	var (
 		matchHoriz []Interval
@@ -191,7 +173,7 @@ func FindPattern(board *BoardDescription, player Cell, patterns [][]Cell) []Inte
 		// get slice of each row
 		row := board.GetHorizSlice(i, 0, board.CellsHoriz-1)
 		// and scan for a chain
-		tmp := scanLine(row, 0, i, patterns, player, horizontal)
+		tmp := scanLine(row, 0, i, pattern, player, horizontal)
 
 		// if there was a positive result copy it to the global result
 		if tmp != nil {
@@ -205,7 +187,7 @@ func FindPattern(board *BoardDescription, player Cell, patterns [][]Cell) []Inte
 		// get slice of each column
 		column := board.GetVertSlice(i, 0, board.CellsVert-1)
 		// and scan for a chain
-		tmp := scanLine(column, i, 0, patterns, player, vertical)
+		tmp := scanLine(column, i, 0, pattern, player, vertical)
 
 		// if there was a positive result copy it to the global result
 		if tmp != nil {
@@ -216,23 +198,23 @@ func FindPattern(board *BoardDescription, player Cell, patterns [][]Cell) []Inte
 	// and finally diagonal
 
 	for i := 0; i < board.CellsVert; i++ {
-		tmp := scanLine(board.GetRLDiagonal(0, i), i, 0, patterns, player, RLDiagonal)
+		tmp := scanLine(board.GetRLDiagonal(0, i), i, 0, pattern, player, RLDiagonal)
 		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
 	}
 
 	for i := 1; i < board.CellsHoriz; i++ {
 		tmp := scanLine(board.GetRLDiagonal(i, board.CellsVert - 1), board.CellsVert - 1, i,
-			patterns, player, RLDiagonal)
+			pattern, player, RLDiagonal)
 		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
 	}
 
 	for i := 0; i < board.CellsHoriz; i++ {
-		tmp := scanLine(board.GetLRDiagonal(i, 0), i, 0, patterns, player, LRDiagonal)
+		tmp := scanLine(board.GetLRDiagonal(i, 0), i, 0, pattern, player, LRDiagonal)
 		if tmp != nil { matchDiag = append(matchDiag, tmp...) }
 	}
 
 	for i := 1; i < board.CellsVert; i++ {
-		tmp := scanLine(board.GetLRDiagonal(0, i), 0, i, patterns, player, LRDiagonal)
+		tmp := scanLine(board.GetLRDiagonal(0, i), 0, i, pattern, player, LRDiagonal)
 		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
 	}
 
@@ -261,22 +243,28 @@ func checkWin(board *BoardDescription, opt AIOptions) Cell {
 
 	opponent := switchPlayer(opt.AIPlayer)
 
-	patterns := MakePatterns(opt.winSequenceLength, opt.AIPlayer)
-	if len(FindPattern(board, opt.AIPlayer, patterns)) != 0 {
+	pattern := MakePatterns(opt.winSequenceLength, opt.AIPlayer)
+	tmp := FindPattern(board, opt.AIPlayer, pattern)
+
+	if len(tmp) != 0 {
 		return opt.AIPlayer
 	}
 
-	patterns = MakePatterns(opt.winSequenceLength, opponent)
-	if len(FindPattern(board, opponent, patterns)) != 0 {
+	pattern = MakePatterns(opt.winSequenceLength, opponent)
+	tmp = FindPattern(board, opponent, pattern)
+
+	if len(tmp) != 0 {
 		return opponent
 	}
 
 	return E
 }
 
+// isGameOver determines whether there is N in-a-row Xs or Os on a board
+// which would mean that there is a winner and the game is over
 func isGameOver(board *BoardDescription, opt AIOptions, player Cell) (bool, []Interval) {
 
-	pattern := [][]Cell{MakePatterns(opt.winSequenceLength, player)[0]}
+	pattern := MakePatterns(opt.winSequenceLength, player)
 
 	intervals := FindPattern(board, player, pattern)
 
@@ -319,13 +307,16 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 	opponent := switchPlayer(options.AIPlayer)
 	scores := make([]float64, board.NumCells())
 
+	// freeIndices are always the same
+	freeIndices := board.GetFreeIndices()
+
 	for trial := 0; trial < trials; trial++ {
 
 		// clone existing board
 		clonedBoard := CloneBoard(board)
 
 		// shuffle free cells
-		free := ShuffleIntSlice(clonedBoard.GetFreeIndices())
+		free := ShuffleIntSlice(freeIndices)
 
 		// compute number of iterations for each trial
 		iterations := minIntPair(minIntPair(board.NumCells(), maxDepth), len(free))
@@ -345,13 +336,13 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 			}
 
 			if i < iterations {
-
 				clonedBoard.SetCellLinear(free[0], whoMoves)
-
 				whoMoves = switchPlayer(whoMoves)
 				free = free[1:]
 
-			} else if i >= iterations { break }
+			} else {
+				break
+			}
 		}
 
 	}
@@ -380,6 +371,39 @@ func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxDepth, tr
 	return CellPosition{col, row}, bestValue
 }
 
+// MinMax evaluation with optional alpha-beta pruning
+func MinMaxEval(board *BoardDescription, freeCells []int, movesMade []LinearMove, whoMoves Cell,
+		options AIOptions, depth int, alphaBeta bool) (bestMove CellPosition, bestVal float64) {
+
+	if depth == 0 {
+
+		// perform static eval
+		board = CloneBoard(board).FillBoardLinear(movesMade)
+
+		bestMove, bestVal = MonteCarloBestMove(board, options, board.NumFreeCells(),
+			4, switchPlayer(whoMoves))
+
+		return
+	}
+
+	copy(movesMade, movesMade)
+
+	bestVal, bestMove = -math.MaxFloat64, CellPosition{}
+
+	for idx, cellIdx := range freeCells {
+
+		curMove, curVal := MinMaxEval(board, freeCells[idx + 1:], append(movesMade, LinearMove{cellIdx, whoMoves}),
+			switchPlayer(whoMoves), options, depth - 1, alphaBeta)
+
+		if curVal >= bestVal {
+			bestMove = curMove
+			bestVal = curVal
+		}
+
+	}
+
+	return
+}
 
 // Function to choose the best move from a given position
 func MakeMove(board *BoardDescription, options AIOptions) (Cell, []Interval) {
@@ -392,6 +416,9 @@ func MakeMove(board *BoardDescription, options AIOptions) (Cell, []Interval) {
 	if playerWon {
 		return opponent, intervals
 	}
+
+//	movesMade := make([]LinearMove, 0, board.NumFreeCells())
+//	MinMaxEval(board, board.GetFreeIndices(), movesMade, options.AIPlayer, options, 1, false)
 
 	bestMove, _ := MonteCarloBestMove(board, options, board.NumFreeCells(),
 		300, options.AIPlayer)

@@ -1,5 +1,10 @@
 package misc
 
+type LinearMove struct {
+	position int
+	player Cell
+}
+
 type ScanDirection uint8
 
 type CellPosition struct {
@@ -79,4 +84,3 @@ const (
 	AI_LOSES = -10
 	DRAW = 0
 )
-

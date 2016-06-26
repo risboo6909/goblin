@@ -100,6 +100,14 @@ func GetRandomizedBoard(cellsHoriz, cellsVert int, emptyPercent float64) *BoardD
 	return board
 }
 
+// FillBoardLinear fills up the board from a list of moves
+func (p *BoardDescription) FillBoardLinear(moves []LinearMove) *BoardDescription {
+	for _, move := range moves {
+		p.SetCellLinear(move.position, move.player)
+	}
+	return p
+}
+
 // NumCells returns total number of cells
 func (p *BoardDescription) NumCells() int {
 	return p.CellsHoriz * p.CellsVert

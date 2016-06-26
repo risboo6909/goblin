@@ -124,6 +124,7 @@ func TestFindAllChains(t *testing.T) {
 	board.SetCell(6, 0, X)
 	board.SetCell(7, 0, X)
 	board.SetCell(8, 0, X)
+	board.SetCell(9, 0, X)
 
 	board.SetCell(6, 10, X)
 	board.SetCell(5, 11, X)
@@ -142,7 +143,7 @@ func TestFindAllChains(t *testing.T) {
 	result := FindPattern(board, X, MakePatterns(5, X))
 
 	if !reflect.DeepEqual(result, []Interval {
-		Interval{horizontal, CellPosition{4,0}, CellPosition{9,0}},
+		Interval{horizontal, CellPosition{5,0}, CellPosition{9,0}},
 		Interval{RLDiagonal, CellPosition{6,10},CellPosition{2,14}}}) {
 		t.Fatalf("Error in FindAllChains")
 	}
@@ -162,10 +163,11 @@ func TestFindAllChains(t *testing.T) {
 	board.SetCell(2, 2, X)
 	board.SetCell(3, 3, X)
 	board.SetCell(4, 4, X)
+	board.SetCell(5, 5, X)
 
 	result = FindPattern(board, X, MakePatterns(5, X))
 
-	assertEqual(t, result[0], Interval{LRDiagonal, CellPosition{0, 0}, CellPosition{5, 5}})
+	assertEqual(t, result[0], Interval{LRDiagonal, CellPosition{1, 1}, CellPosition{5, 5}})
 }
 
 func TestShuffleIntSlice(t *testing.T) {
@@ -188,13 +190,11 @@ func TestMakeSearchPatterns(t *testing.T) {
 
 	result := MakePatterns(5, X)
 
-	assertEqual(t, result[0], []Cell{X, X, X, X, X})
-	assertEqual(t, result[1], []Cell{E, X, X, X, X, E})
+	assertEqual(t, result, []Cell{X, X, X, X, X})
 
 	result = MakePatterns(3, O)
 
-	assertEqual(t, result[0], []Cell{O, O, O})
-	assertEqual(t, result[1], []Cell{E, O, O, E})
+	assertEqual(t, result, []Cell{O, O, O})
 
 }
 
@@ -222,7 +222,7 @@ func TestMonteCarloBestMove(t *testing.T) {
 	result, _ = MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, O)
 
 	// Better luck next time, O was really good in this game
-	assertEqual(t, result, CellPosition{0, 0})
+	assertEqual(t, result, CellPosition{5, 5})
 
 	board = NewBoard(6, 6)
 
