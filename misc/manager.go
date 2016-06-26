@@ -9,11 +9,11 @@ import (
 // Sessions manager
 
 type Session struct {
-	Board     *BoardDescription
-	AI        AIOptions
-	SessionID string
-	Winner    Cell
-	Interval  Interval
+	Board      *BoardDescription
+	AI         AIOptions
+	SessionID  string
+	Winner     Cell
+	Intervals  []Interval
 }
 
 
@@ -62,7 +62,7 @@ func CreateNewSession(boardSide int, player Cell) Session {
 
 		generateSessionId(10),
 		E,
-		Interval{},
+		[]Interval{},
 	}
 }
 
@@ -72,7 +72,7 @@ func RemoveSession() {
 
 
 func (s *Session) MakeMove() {
-	winner, interval := MakeMove(s.Board, s.AI)
+	winner, intervals := MakeMove(s.Board, s.AI)
 	s.Winner = winner
-	s.Interval = interval
+	s.Intervals = intervals
 }

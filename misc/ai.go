@@ -131,7 +131,7 @@ func scanLine(line []Cell, col, row int, patterns [][]Cell, player Cell, directi
 // function to effectively generate sequences to scan on a board with caching
 func patternBuilder() func(int, Cell) [][]Cell {
 
-	winningSequences := make(map[struct{ int; Cell}][][]Cell)
+	winningSequences := make(map[struct{int; Cell}][][]Cell)
 
 	return func (targetLen int, p Cell) [][]Cell {
 
@@ -274,17 +274,17 @@ func checkWin(board *BoardDescription, opt AIOptions) Cell {
 	return E
 }
 
-func isGameOver(board *BoardDescription, opt AIOptions, player Cell) (bool, Interval) {
+func isGameOver(board *BoardDescription, opt AIOptions, player Cell) (bool, []Interval) {
 
 	pattern := [][]Cell{MakePatterns(opt.winSequenceLength, player)[0]}
 
 	intervals := FindPattern(board, player, pattern)
 
 	if len(intervals) != 0 {
-		return true, intervals[0]
+		return true, intervals
 	}
 
-	return false, Interval{}
+	return false, intervals
 }
 
 // updateScores updates scores array according to Monte-Carlo outcomes
@@ -382,27 +382,27 @@ func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxDepth, tr
 
 
 // Function to choose the best move from a given position
-func MakeMove(board *BoardDescription, options AIOptions) (Cell, Interval) {
+func MakeMove(board *BoardDescription, options AIOptions) (Cell, []Interval) {
 	// Use Monte-Carlo for static evaluation
 
 	opponent := switchPlayer(options.AIPlayer)
 
-	playerWon, interval := isGameOver(board, options, opponent)
+	playerWon, intervals := isGameOver(board, options, opponent)
 
 	if playerWon {
-		return opponent, interval
+		return opponent, intervals
 	}
 
 	bestMove, _ := MonteCarloBestMove(board, options, board.NumFreeCells(),
 		300, options.AIPlayer)
 
-	board.SetCell(bestMove.col, bestMove.row, options.AIPlayer)
+	board.SetCell(bestMove.Col, bestMove.Row, options.AIPlayer)
 
-	AIWon, interval := isGameOver(board, options, options.AIPlayer)
+	AIWon, intervals := isGameOver(board, options, options.AIPlayer)
 
 	if AIWon {
-		return options.AIPlayer, interval
+		return options.AIPlayer, intervals
 	}
 
-	return E, Interval{}
+	return E, []Interval{}
 }
