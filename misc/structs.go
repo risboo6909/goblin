@@ -1,5 +1,28 @@
 package misc
 
+
+type IntFloatPair struct {
+	Fst int
+	Snd float64
+}
+
+
+type IntFloatPairs []IntFloatPair
+
+func (slice IntFloatPairs) Len() int {
+	return len(slice)
+}
+
+func (slice IntFloatPairs) Less(i, j int) bool {
+	// descending order by default
+	return slice[i].Snd > slice[j].Snd
+}
+
+func (slice IntFloatPairs) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
+
 type LinearMove struct {
 	position int
 	player Cell

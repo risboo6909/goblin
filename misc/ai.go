@@ -3,7 +3,7 @@ package misc
 import (
 	"math/rand"
 	"math"
-	"fmt"
+	"sort"
 )
 
 // KMPPrefixTable is a helper function for KMPSearch that generates
@@ -279,7 +279,7 @@ func updateScores(board *BoardDescription, opponent, winner Cell, scores []int) 
 }
 
 // MonteCarloEval uses Monte-Carlo method to assess current position, intended to be used
-// as a static evaluator for leaf nodes
+// as a heuristic to reduce search space
 func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials int, movesFirst Cell) []float64 {
 
 	opponent := switchPlayer(options.AIPlayer)
@@ -364,8 +364,41 @@ func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxDepth, tr
 	return CellPosition{col, row}, bestValue
 }
 
+// ArrangeMonteCarloResults sorts result of monte carlo evaluation in descending order
+func ArrangeMonteCarloResults(board *BoardDescription, options AIOptions, maxDepth, trials int, whoMoves Cell) IntFloatPairs {
+
+	scores := MonteCarloEval(board, options, maxDepth, trials, whoMoves)
+	tmp := make(IntFloatPairs, len(scores))
+
+	for idx, v := range scores {
+		tmp[idx].Fst = idx
+		tmp[idx].Snd = v
+	}
+
+	sort.Sort(tmp)
+
+	return tmp
+}
+
+// filterArrangedResults leaves moves with the values greater than threshold and return
+// their indices on a board
+func filterArrangedResults(moves IntFloatPairs, threshold float64) []int {
+	result := make([]int, 0, len(moves))
+	for _, v := range moves {
+		if v.Snd >= threshold {
+			result = append(result, v.Fst)
+		}
+	}
+	return result
+}
+
+// Statically analyze board position by search some simple winning patterns
+func StaticPositionAnalyzer() {
+
+}
+
 // MinMax evaluation with optional alpha-beta pruning
-func MinMaxEval(board *BoardDescription, freeCells []int, movesMade []LinearMove, whoMoves Cell,
+func MinMaxEval(board *BoardDescription, cellsToCheck []int, movesMade []LinearMove, whoMoves Cell,
 		options AIOptions, depth int, alphaBeta bool) (bestMove CellPosition, bestVal float64) {
 
 	if depth == 0 {
@@ -373,8 +406,8 @@ func MinMaxEval(board *BoardDescription, freeCells []int, movesMade []LinearMove
 		// perform static eval
 		board = CloneBoard(board).FillBoardLinear(movesMade)
 
-		bestMove, bestVal = MonteCarloBestMove(board, options, board.NumFreeCells(),
-			100, switchPlayer(whoMoves))
+		//bestMove, bestVal = MonteCarloBestMove(board, options, board.NumFreeCells(),
+		//	100, switchPlayer(whoMoves))
 
 		return
 	}
@@ -383,9 +416,9 @@ func MinMaxEval(board *BoardDescription, freeCells []int, movesMade []LinearMove
 
 	bestVal, bestMove = -math.MaxFloat64, CellPosition{}
 
-	for idx, cellIdx := range freeCells {
+	for idx, cellIdx := range cellsToCheck {
 
-		curMove, curVal := MinMaxEval(board, freeCells[idx + 1:], append(movesMade, LinearMove{cellIdx, whoMoves}),
+		curMove, curVal := MinMaxEval(board, cellsToCheck[idx + 1:], append(movesMade, LinearMove{cellIdx, whoMoves}),
 			switchPlayer(whoMoves), options, depth - 1, alphaBeta)
 
 		if curVal >= bestVal {
@@ -409,14 +442,21 @@ func MakeMove(board *BoardDescription, options AIOptions) (Cell, []Interval) {
 	if playerWon {
 		return opponent, intervals
 	}
-	//
-	//movesMade := make([]LinearMove, 0, board.NumFreeCells())
-	//MinMaxEval(board, board.GetFreeIndices(), movesMade, options.AIPlayer, options, 1, false)
 
-	bestMove, _ := MonteCarloBestMove(board, options, board.NumFreeCells(),
-		4000, options.AIPlayer)
+	arrangedMoves := ArrangeMonteCarloResults(board, options, board.NumFreeCells(),
+							200, options.AIPlayer)
 
-	board.SetCell(bestMove.Col, bestMove.Row, options.AIPlayer)
+	// simple heuristic rule here is to take moves with the
+	// values grater than hundredth of one
+	cellsToCheck := filterArrangedResults(arrangedMoves, 0.05)
+
+	movesMade := make([]LinearMove, 0, board.NumFreeCells())
+	MinMaxEval(board, cellsToCheck, movesMade, options.AIPlayer, options, 4, false)
+
+	//bestMove, _ := MonteCarloBestMove(board, options, board.NumFreeCells(),
+	//	2000, options.AIPlayer)
+
+	//board.SetCell(bestMove.Col, bestMove.Row, options.AIPlayer)
 
 	AIWon, intervals := checkWin(board, options, options.AIPlayer)
 
