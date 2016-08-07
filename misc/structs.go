@@ -107,3 +107,11 @@ const (
 	AI_LOSES = -10
 	DRAW = 0
 )
+
+type PatternType struct {
+	winNow []Cell
+	winInAMove []Cell
+}
+
+var winningPatternsX PatternType
+var winningPatternsO PatternType

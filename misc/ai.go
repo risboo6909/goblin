@@ -127,37 +127,37 @@ func scanLine(line []Cell, col, row int, pattern []Cell, player Cell, direction 
 	return result
 }
 
-// patternBuilder is a helper function which returns another
-// function to effectively generate sequences to scan on a board with caching
-func patternBuilder() func(int, Cell) []Cell {
+func generateWinningPatterns(winLength int) {
 
-	winningSequences := make(map[struct{int; Cell}][]Cell)
-
-	return func (targetLen int, p Cell) []Cell {
-
-		key := struct{int; Cell}{targetLen, p}
-
-		sequence, ok := winningSequences[key]
-
-		if !ok {
-
-			// test all in a row (for instance: X, X, X, X, X is a current move winner)
-			winningSequences[key] = make([]Cell, targetLen)
-
-			for j := 0; j < targetLen; j++ {
-				winningSequences[key][j] = p
-			}
-
-			sequence = winningSequences[key]
+	fillPattern := func (player Cell) []Cell {
+		tmp := make([]Cell, winLength)
+		for j := 0; j < winLength; j++ {
+			tmp[j] = player
 		}
-
-		return sequence
+		return tmp
 	}
+
+	// all in a row
+	winningPatternsX.winNow = fillPattern(X)
+
+	winningPatternsX.winInAMove = fillPattern(X)
+	winningPatternsX.winInAMove[0] = E
+	winningPatternsX.winInAMove[winLength - 1] = E
+
+	winningPatternsO.winNow = fillPattern(O)
+
+	winningPatternsO.winInAMove = fillPattern(O)
+	winningPatternsO.winInAMove[0] = E
+	winningPatternsO.winInAMove[winLength - 1] = E
+
 }
 
-// MakePatterns generates winning patterns of specified length to search on a board
-var MakePatterns = patternBuilder()
-
+func getWinningPatterns(player Cell) PatternType {
+	if player == X {
+		return winningPatternsX
+	}
+	return winningPatternsO
+}
 
 // FindPattern finds vertical, horizontal or diagonal patterns generated using MakePatterns
 func FindPattern(board *BoardDescription, player Cell, pattern []Cell) []Interval {
@@ -242,7 +242,7 @@ func switchPlayer(player Cell) Cell {
 // which would mean that there is a winner and the game is over
 func checkWin(board *BoardDescription, opt AIOptions, player Cell) (bool, []Interval) {
 
-	pattern := MakePatterns(opt.winSequenceLength, player)
+	pattern := getWinningPatterns(player).winNow
 
 	intervals := FindPattern(board, player, pattern)
 
@@ -306,8 +306,6 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 			clonedBoard.SetCellLinear(free[0], whoMoves)
 
 			// if there is a 100% winner on this trial
-			//winner := checkWin(clonedBoard, options)
-
 			winner, _ := checkWin(clonedBoard, options, whoMoves)
 
 			if winner {
@@ -318,10 +316,14 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 			}
 
 			if i < iterations {
+
 				whoMoves = switchPlayer(whoMoves)
 				free = free[1:]
+
 			} else {
+
 				break
+
 			}
 		}
 
@@ -360,7 +362,6 @@ func MonteCarloBestMove(board *BoardDescription, options AIOptions, maxDepth, tr
 	}
 
 	col, row, _ := board.FromLinear(bestMove)
-
 	return CellPosition{col, row}, bestValue
 }
 
@@ -380,7 +381,7 @@ func ArrangeMonteCarloResults(board *BoardDescription, options AIOptions, maxDep
 	return tmp
 }
 
-// filterArrangedResults leaves moves with the values greater than threshold and return
+// filterArrangedResults leaves moves valued greater than threshold and returns
 // their indices on a board
 func filterArrangedResults(moves IntFloatPairs, threshold float64) []int {
 	result := make([]int, 0, len(moves))
@@ -433,6 +434,9 @@ func MinMaxEval(board *BoardDescription, cellsToCheck []int, movesMade []LinearM
 
 // Function to choose the best move from a given position
 func MakeMove(board *BoardDescription, options AIOptions) (Cell, []Interval) {
+
+	generateWinningPatterns(options.winSequenceLength)
+
 	// Use Monte-Carlo for static evaluation
 
 	opponent := switchPlayer(options.AIPlayer)

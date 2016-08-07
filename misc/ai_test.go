@@ -27,7 +27,8 @@ func TestFindChainDiagonal(t *testing.T) {
 	board.SetCell(2, 17, X)
 	board.SetCell(3, 18, X)
 
-	result := FindPattern(board, X, MakePatterns(4, X))
+	generateWinningPatterns(4)
+	result := FindPattern(board, X, getWinningPatterns(X).winNow)
 
 	assertEqual(t, result[0], Interval{LRDiagonal, CellPosition{2, 2}, CellPosition{5, 5}})
 	assertEqual(t, result[1], Interval{LRDiagonal, CellPosition{7, 3}, CellPosition{10, 6}})
@@ -58,7 +59,8 @@ func TestFindChainDiagonal(t *testing.T) {
 	board.SetCell(6, 4, O)
 	board.SetCell(7, 3, O)
 
-	result = FindPattern(board, O, MakePatterns(6, O))
+	generateWinningPatterns(6)
+	result = FindPattern(board, O, getWinningPatterns(O).winNow)
 
 	assertEqual(t, result[0], Interval{RLDiagonal, CellPosition{7, 3}, CellPosition{2, 8}})
 	assertEqual(t, result[1], Interval{RLDiagonal, CellPosition{5, 13}, CellPosition{0, 18}})
@@ -104,7 +106,8 @@ func TestFindChainHorizVert(t *testing.T) {
 	board.SetCell(18, 17, X)
 	board.SetCell(18, 18, X)
 
-	result := FindPattern(board, X, MakePatterns(4, X))
+	generateWinningPatterns(4)
+	result := FindPattern(board, X, getWinningPatterns(X).winNow)
 
 	assertEqual(t, result[0], Interval{horizontal, CellPosition{0, 0}, CellPosition{3, 0}})
 	assertEqual(t, result[1], Interval{horizontal, CellPosition{5, 0}, CellPosition{8, 0}})
@@ -140,7 +143,8 @@ func TestFindAllChains(t *testing.T) {
 	board.SetCell(15, 0, X)
 	board.SetCell(16, 0, X)
 
-	result := FindPattern(board, X, MakePatterns(5, X))
+	generateWinningPatterns(5)
+	result := FindPattern(board, X, getWinningPatterns(X).winNow)
 
 	if !reflect.DeepEqual(result, []Interval {
 		Interval{horizontal, CellPosition{5,0}, CellPosition{9,0}},
@@ -150,7 +154,8 @@ func TestFindAllChains(t *testing.T) {
 
 	board = NewBoard(19, 19)
 
-	result = FindPattern(board, O, MakePatterns(3, O))
+	generateWinningPatterns(3)
+	result = FindPattern(board, O, getWinningPatterns(O).winNow)
 
 	// return empty map if nothing has been found
 	if len(result) > 0 {
@@ -165,7 +170,8 @@ func TestFindAllChains(t *testing.T) {
 	board.SetCell(4, 4, X)
 	board.SetCell(5, 5, X)
 
-	result = FindPattern(board, X, MakePatterns(5, X))
+	generateWinningPatterns(5)
+	result = FindPattern(board, X, getWinningPatterns(X).winNow)
 
 	assertEqual(t, result[0], Interval{LRDiagonal, CellPosition{1, 1}, CellPosition{5, 5}})
 }
@@ -188,11 +194,13 @@ func TestShuffleIntSlice(t *testing.T) {
 
 func TestMakeSearchPatterns(t *testing.T) {
 
-	result := MakePatterns(5, X)
+	generateWinningPatterns(5)
+	result := getWinningPatterns(X).winNow
 
 	assertEqual(t, result, []Cell{X, X, X, X, X})
 
-	result = MakePatterns(3, O)
+	generateWinningPatterns(3)
+	result = getWinningPatterns(O).winNow
 
 	assertEqual(t, result, []Cell{O, O, O})
 
@@ -207,6 +215,7 @@ func TestMonteCarloBestMove(t *testing.T) {
 	board.SetCell(3, 3, X)
 	board.SetCell(4, 4, X)
 
+	generateWinningPatterns(5)
 	result, _ := MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, O)
 
 	// Yeahh, X will certainly w in!
@@ -219,6 +228,7 @@ func TestMonteCarloBestMove(t *testing.T) {
 	board.SetCell(3, 3, O)
 	board.SetCell(4, 4, O)
 
+	generateWinningPatterns(5)
 	result, _ = MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, O)
 
 	// Better luck next time, O was really good in this game
@@ -231,6 +241,7 @@ func TestMonteCarloBestMove(t *testing.T) {
 	board.SetCell(2, 1, O)
 	board.SetCell(3, 1, O)
 
+	generateWinningPatterns(5)
 	result, _ = MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, X)
 
 	// The only move for X is 4, 1
@@ -243,6 +254,7 @@ func TestMonteCarloBestMove(t *testing.T) {
 // Some benchmarks
 
 func BenchmarkMonteCarloBestMove10(b *testing.B) {
+	generateWinningPatterns(5)
 	for n := 0; n < b.N; n++ {
 		board := NewBoard(19, 19)
 		MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 10 * 10, 10, X)
@@ -250,6 +262,7 @@ func BenchmarkMonteCarloBestMove10(b *testing.B) {
 }
 
 func BenchmarkMonteCarloBestMove50(b *testing.B) {
+	generateWinningPatterns(5)
 	for n := 0; n < b.N; n++ {
 		board := NewBoard(19, 19)
 		MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 10 * 10, 50, X)
@@ -257,6 +270,7 @@ func BenchmarkMonteCarloBestMove50(b *testing.B) {
 }
 
 func BenchmarkMonteCarloBestMove100(b *testing.B) {
+	generateWinningPatterns(5)
 	for n := 0; n < b.N; n++ {
 		board := NewBoard(19, 19)
 		MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 10 * 10, 100, X)
