@@ -13,7 +13,7 @@ var (
 	gameState = StateGameplay
 	moveBoard = false
 
-	gameSession = misc.CreateNewSession(15, misc.X)
+	gameSession = misc.CreateNewSession(13, 4, misc.X)
 
 	board = ui.CloneExistingBoard(gameSession.Board, 0, 0, termbox.ColorBlack, termbox.ColorBlue,
 		termbox.ColorRed, termbox.ColorBlack)
@@ -36,7 +36,7 @@ func update(ev termbox.Event) {
 				os.Exit(0)
 			}
 
-			if ev.Key == termbox.KeyF2 {
+			if ev.Key == termbox.KeyF10 {
 				moveBoard = !moveBoard
 			}
 
