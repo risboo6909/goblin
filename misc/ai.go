@@ -137,13 +137,16 @@ func generateWinningPatterns(winLength int) {
 		return tmp
 	}
 
-	// all in a row
+	// required number in a row
 	winningPatternsX.winNow = fillPattern(X)
 
+	// all - 1 in a row + empty cells on sides always
+	// leads to victory for player
 	winningPatternsX.winInAMove = fillPattern(X)
 	winningPatternsX.winInAMove[0] = E
 	winningPatternsX.winInAMove[winLength - 1] = E
 
+	// same for O player
 	winningPatternsO.winNow = fillPattern(O)
 
 	winningPatternsO.winInAMove = fillPattern(O)
@@ -278,9 +281,28 @@ func updateScores(board *BoardDescription, opponent, winner Cell, scores []int) 
 	}
 }
 
+func normalizeScores(scores []int) []float64 {
+
+	sum, scoresNorm := 0, make([]float64, len(scores))
+
+	for _, v := range scores {
+		sum += v
+	}
+
+	for idx, v := range scores {
+		scoresNorm[idx] = float64(v) / float64(sum)
+	}
+
+	return scoresNorm
+}
+
 // MonteCarloEval uses Monte-Carlo method to assess current position, intended to be used
 // as a heuristic to reduce search space
 func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials int, movesFirst Cell) []float64 {
+
+	// for implementation simplicity we only search for a full length winning sequence here
+	// it allows to make such a simple method without handling special cases, more thorough
+	// analysis will be performed in other methods
 
 	opponent := switchPlayer(options.AIPlayer)
 	scores := make([]int, board.NumCells())
@@ -305,44 +327,24 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 
 			clonedBoard.SetCellLinear(free[0], whoMoves)
 
-			// if there is a 100% winner on this trial
+			// if there is a winner in current move
 			winner, _ := checkWin(clonedBoard, options, whoMoves)
 
 			if winner {
-
 				updateScores(clonedBoard, opponent, whoMoves, scores)
 				break
-
 			}
 
 			if i < iterations {
-
 				whoMoves = switchPlayer(whoMoves)
 				free = free[1:]
-
 			} else {
-
 				break
-
 			}
 		}
-
 	}
 
-	// normalize scores
-
-	sum := 0
-	scoresNorm := make([]float64, len(scores))
-
-	for _, v := range scores {
-		sum += v
-	}
-
-	for idx, v := range scores {
-		scoresNorm[idx] = float64(v) / float64(sum)
-	}
-
-	return scoresNorm
+	return normalizeScores(scores)
 }
 
 // MonteCarloBestMove search for a best move by using Monte-Carlo evaluation, accepts board description, ai options
@@ -394,6 +396,9 @@ func filterArrangedResults(moves IntFloatPairs, threshold float64) []int {
 }
 
 // Statically analyze board position by search some simple winning patterns
+// Main principles are:
+// 1. n in-a-row or n-1 in a row have the biggest grade
+// 2. longer chains - bigger grade
 func StaticPositionAnalyzer() {
 
 }
@@ -419,7 +424,8 @@ func MinMaxEval(board *BoardDescription, cellsToCheck []int, movesMade []LinearM
 
 	for idx, cellIdx := range cellsToCheck {
 
-		curMove, curVal := MinMaxEval(board, cellsToCheck[idx + 1:], append(movesMade, LinearMove{cellIdx, whoMoves}),
+		curMove, curVal := MinMaxEval(board, cellsToCheck[idx + 1:],
+			append(movesMade, LinearMove{cellIdx, whoMoves}),
 			switchPlayer(whoMoves), options, depth - 1, alphaBeta)
 
 		if curVal >= bestVal {

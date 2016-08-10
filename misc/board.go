@@ -19,7 +19,8 @@ const (
 // Mimic python set
 type Set map[interface{}]bool
 
-// Cell structure defines possible cell state, it can be eiather X, O or EMPTY
+// Cell structure defines possible cell states,
+// it can be either X, O or EMPTY
 type Cell byte
 
 func randomCell(cellValues ...Cell) Cell {
