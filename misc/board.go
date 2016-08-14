@@ -16,9 +16,6 @@ const (
 )
 
 
-// Mimic python set
-type Set map[interface{}]bool
-
 // Cell structure defines possible cell states,
 // it can be either X, O or EMPTY
 type Cell byte
@@ -270,17 +267,33 @@ func (p *BoardDescription) GetCellLinear(linearIdx int) Cell {
 	panic(errors.New("Index out of range"))
 }
 
-// GetFreeIndices returns indices of free board cells
-func (p *BoardDescription) GetFreeIndices() []int {
+// GetIndicesOfAKind returns all the cells which contain any item from a given
+// kind list
+func (p *BoardDescription) getIndicesOfAKind(kind... Cell) []int {
 
-	var result []int
+	var result []int = make([]int, 0, p.NumCells())
 
 	for i, v := range p.Content {
-		if v == E {
-			result = append(result, i)
+		for _, b := range kind {
+			if b == v {
+				result = append(result, i)
+				break
+			}
 		}
 	}
 	return result
+
+}
+
+// GetFreeIndices returns indices of free board cells
+func (p *BoardDescription) GetFreeIndices() []int {
+	return p.getIndicesOfAKind(E)
+}
+
+// GetOccupiedIndices returns indices of a board that occupied
+// by X and O
+func (p *BoardDescription) GetOccupiedIndices() []int {
+	return p.getIndicesOfAKind(O, X)
 }
 
 // Represent board in human-readable format
