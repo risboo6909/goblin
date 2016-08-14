@@ -1,6 +1,9 @@
 package misc
 
 
+// Mimic python set
+type Set map[interface{}]bool
+
 type IntFloatPair struct {
 	Fst int
 	Snd float64
@@ -86,7 +89,7 @@ type AIOptions struct {
 	AIPlayer Cell
 	winSequenceLength int
 	maxDepth int
-
+	useAlphaBeta bool
 }
 
 const (
@@ -103,9 +106,9 @@ const (
 )
 
 const (
-	AI_WINS = 10
-	AI_LOSES = -10
-	DRAW = 0
+	WIN = 10
+	LOST = -WIN
+	NOTHING = 0
 )
 
 type PatternType struct {
