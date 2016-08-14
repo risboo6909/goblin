@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"math"
 	"sort"
+	"fmt"
 )
 
 // KMPPrefixTable is a helper function for KMPSearch that generates
@@ -129,29 +130,29 @@ func scanLine(line []Cell, col, row int, pattern []Cell, player Cell, direction 
 
 func generateWinningPatterns(winLength int) {
 
-	fillPattern := func (player Cell) []Cell {
-		tmp := make([]Cell, winLength)
-		for j := 0; j < winLength; j++ {
+	fillPattern := func (player Cell, length int) []Cell {
+		tmp := make([]Cell, length)
+		for j := 0; j < length; j++ {
 			tmp[j] = player
 		}
 		return tmp
 	}
 
 	// required number in a row
-	winningPatternsX.winNow = fillPattern(X)
+	winningPatternsX.winNow = fillPattern(X, winLength)
 
 	// all - 1 in a row + empty cells on sides always
 	// leads to victory for player
-	winningPatternsX.winInAMove = fillPattern(X)
+	winningPatternsX.winInAMove = fillPattern(X, winLength + 1)
 	winningPatternsX.winInAMove[0] = E
-	winningPatternsX.winInAMove[winLength - 1] = E
+	winningPatternsX.winInAMove[winLength] = E
 
 	// same for O player
-	winningPatternsO.winNow = fillPattern(O)
+	winningPatternsO.winNow = fillPattern(O, winLength)
 
-	winningPatternsO.winInAMove = fillPattern(O)
+	winningPatternsO.winInAMove = fillPattern(O, winLength + 1)
 	winningPatternsO.winInAMove[0] = E
-	winningPatternsO.winInAMove[winLength - 1] = E
+	winningPatternsO.winInAMove[winLength] = E
 
 }
 
@@ -162,7 +163,8 @@ func getWinningPatterns(player Cell) PatternType {
 	return winningPatternsO
 }
 
-// FindPattern finds vertical, horizontal or diagonal patterns generated using MakePatterns
+// FindPattern finds vertical, horizontal or diagonal patterns generated using MakePatterns,
+// returns list of pattern matched intervals or empty list if nothing was found
 func FindPattern(board *BoardDescription, player Cell, pattern []Cell) []Interval {
 
 	var (
@@ -243,7 +245,7 @@ func switchPlayer(player Cell) Cell {
 
 // checkWin determines whether there is N in-a-row Xs or Os on a board
 // which would mean that there is a winner and the game is over
-func checkWin(board *BoardDescription, opt AIOptions, player Cell) (bool, []Interval) {
+func checkWin(board *BoardDescription, player Cell) (bool, []Interval) {
 
 	pattern := getWinningPatterns(player).winNow
 
@@ -254,6 +256,18 @@ func checkWin(board *BoardDescription, opt AIOptions, player Cell) (bool, []Inte
 	}
 
 	return false, intervals
+}
+
+func hasWinner(board *BoardDescription) (bool, Cell) {
+	winner, _ := checkWin(board, X)
+	if winner {
+		return true, X
+	}
+	winner, _ = checkWin(board, O)
+	if winner {
+		return true, O
+	}
+	return false, O
 }
 
 // updateScores updates scores array according to Monte-Carlo outcomes
@@ -327,8 +341,8 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 
 			clonedBoard.SetCellLinear(free[0], whoMoves)
 
-			// if there is a winner in current move
-			winner, _ := checkWin(clonedBoard, options, whoMoves)
+			// if there is a winner on current move
+			winner, _ := checkWin(clonedBoard, whoMoves)
 
 			if winner {
 				updateScores(clonedBoard, opponent, whoMoves, scores)
@@ -373,9 +387,18 @@ func ArrangeMonteCarloResults(board *BoardDescription, options AIOptions, maxDep
 	scores := MonteCarloEval(board, options, maxDepth, trials, whoMoves)
 	tmp := make(IntFloatPairs, len(scores))
 
+	freeIndices := make(Set)
+
+	for _, v := range board.GetFreeIndices() {
+		freeIndices[v] = true
+	}
+
 	for idx, v := range scores {
-		tmp[idx].Fst = idx
-		tmp[idx].Snd = v
+		// accept free cells only
+		if _, found := freeIndices[idx]; found {
+			tmp[idx].Fst = idx
+			tmp[idx].Snd = v
+		}
 	}
 
 	sort.Sort(tmp)
@@ -395,47 +418,127 @@ func filterArrangedResults(moves IntFloatPairs, threshold float64) []int {
 	return result
 }
 
+// Reduce search space for minmax analysis by figuring out the most important move using
+// Monte-Carlo heuristic
+func ReduceSearchSpaceMonteCarlo(board *BoardDescription, options AIOptions,
+					whoMoves Cell, maxDepth int, threshold float64) []int {
+	arrangedMoves := ArrangeMonteCarloResults(board, options, board.NumFreeCells(),	maxDepth, options.AIPlayer)
+	cellsToCheck := filterArrangedResults(arrangedMoves, threshold)
+	return cellsToCheck
+}
+
+// IsImportantSquare checks whether given cell is important to analyze with minmax algorithm.
+// Cell is considered important if there are non-empty cells around it exist in a
+// given vicinity
+func IsImportantSquare(board *BoardDescription, position, halfSide int) bool {
+
+	// get square around cell given by position argument with the side length
+	// given by halfSide argument
+
+	col, row, _ := board.FromLinear(position)
+
+	leftBorderCol := maxIntPair(col - halfSide, 0)
+	leftBorderRow := maxIntPair(row - halfSide, 0)
+	rightBorderCol := minIntPair(col + halfSide, board.NumCells())
+	rightBorderRow := minIntPair(row + halfSide, board.NumCells())
+
+	// check if all the cell inside the square are empty
+	for col := leftBorderCol; col < rightBorderCol; col++ {
+		for row := leftBorderRow; row < rightBorderRow; row++ {
+			cell := board.GetCell(col, row)
+			if cell != E {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // Statically analyze board position by search some simple winning patterns
 // Main principles are:
 // 1. n in-a-row or n-1 in a row have the biggest grade
 // 2. longer chains - bigger grade
-func StaticPositionAnalyzer() {
+func StaticPositionAnalyzer(board *BoardDescription, options AIOptions, whoMoves Cell) int {
+
+	winningPatterns := getWinningPatterns(whoMoves)
+
+	interval := FindPattern(board, whoMoves, winningPatterns.winNow)
+	//invervals2 := FindPattern(board, whoMoves, winningPatterns.winInAMove)
+
+	if len(interval) != 0 {
+		if whoMoves == options.AIPlayer {
+			return WIN
+		} else {
+			return LOST
+		}
+	}
+
+	//if len(intervals1) != 0 || len(invervals2) != 0 {
+	//
+	//	//fmt.Println(board, intervals1, invervals2, winningPatterns.winInAMove)
+	//
+	//	return WIN
+	//}
+
+	return NOTHING
 
 }
 
 // MinMax evaluation with optional alpha-beta pruning
-func MinMaxEval(board *BoardDescription, cellsToCheck []int, movesMade []LinearMove, whoMoves Cell,
-		options AIOptions, depth int, alphaBeta bool) (bestMove CellPosition, bestVal float64) {
+func MinMaxEval(board *BoardDescription, options AIOptions, cellsToCheck[] int,
+				lastMove LinearMove, depth int) (int, int) {
 
-	if depth == 0 {
+	whoMoves := lastMove.player
+	whoMoved := switchPlayer(whoMoves)
 
-		// perform static eval
-		board = CloneBoard(board).FillBoardLinear(movesMade)
+	selectedMove := lastMove.position
 
-		//bestMove, bestVal = MonteCarloBestMove(board, options, board.NumFreeCells(),
-		//	100, switchPlayer(whoMoves))
+	winner, _ := hasWinner(board)
 
-		return
-	}
+	positionScore := StaticPositionAnalyzer(board, options, whoMoved)
 
-	copy(movesMade, movesMade)
+	if depth > 0 && !winner {
 
-	bestVal, bestMove = -math.MaxFloat64, CellPosition{}
-
-	for idx, cellIdx := range cellsToCheck {
-
-		curMove, curVal := MinMaxEval(board, cellsToCheck[idx + 1:],
-			append(movesMade, LinearMove{cellIdx, whoMoves}),
-			switchPlayer(whoMoves), options, depth - 1, alphaBeta)
-
-		if curVal >= bestVal {
-			bestMove = curMove
-			bestVal = curVal
+		if whoMoves == options.AIPlayer {
+			positionScore = -math.MaxInt64
+		} else {
+			positionScore = math.MaxInt64
 		}
 
+		boardCopy := CloneBoard(board)
+
+		for _, cellIdx := range cellsToCheck {
+
+			board = CloneBoard(boardCopy)
+			board.SetCellLinear(cellIdx, whoMoves)
+
+			_, curVal := MinMaxEval(board, options, board.GetFreeIndices(),
+				LinearMove{cellIdx, switchPlayer(whoMoves)}, depth - 1)
+
+			if whoMoves == options.AIPlayer {
+
+				// try to maximize score
+				if curVal >= positionScore {
+					selectedMove = cellIdx
+					positionScore = curVal
+				}
+
+			} else {
+
+				// opponent tries to minimize score
+				if curVal <= positionScore {
+					selectedMove = cellIdx
+					positionScore = curVal
+				}
+
+			}
+
+		}
 	}
 
-	return
+	return selectedMove, positionScore
+
 }
 
 // Function to choose the best move from a given position
@@ -447,28 +550,36 @@ func MakeMove(board *BoardDescription, options AIOptions) (Cell, []Interval) {
 
 	opponent := switchPlayer(options.AIPlayer)
 
-	playerWon, intervals := checkWin(board, options, opponent)
+	playerWon, intervals := checkWin(board, opponent)
 
 	if playerWon {
 		return opponent, intervals
 	}
 
-	arrangedMoves := ArrangeMonteCarloResults(board, options, board.NumFreeCells(),
-							200, options.AIPlayer)
+	cellsToCheck := ReduceSearchSpaceMonteCarlo(board, options, options.AIPlayer, 200, 0.05)
 
-	// simple heuristic rule here is to take moves with the
-	// values grater than hundredth of one
-	cellsToCheck := filterArrangedResults(arrangedMoves, 0.05)
+	bestLinear, bestVal := MinMaxEval(board, options, cellsToCheck,
+						LinearMove{0, options.AIPlayer}, options.maxDepth)
 
-	movesMade := make([]LinearMove, 0, board.NumFreeCells())
-	MinMaxEval(board, cellsToCheck, movesMade, options.AIPlayer, options, 4, false)
+	col, row, err := board.FromLinear(bestLinear)
 
-	//bestMove, _ := MonteCarloBestMove(board, options, board.NumFreeCells(),
-	//	2000, options.AIPlayer)
+	if err == nil {
 
-	//board.SetCell(bestMove.Col, bestMove.Row, options.AIPlayer)
+		bestMove := CellPosition{col, row}
 
-	AIWon, intervals := checkWin(board, options, options.AIPlayer)
+		fmt.Println(bestLinear, bestMove, bestVal)
+
+		//bestMove, _ := MonteCarloBestMove(board, options, board.NumFreeCells(),
+		//	2000, options.AIPlayer)
+
+		board.SetCell(bestMove.Col, bestMove.Row, options.AIPlayer)
+
+	} else {
+		// TODO: Add proper logging
+		fmt.Println("ERROR")
+	}
+
+	AIWon, intervals := checkWin(board, options.AIPlayer)
 
 	if AIWon {
 		return options.AIPlayer, intervals
