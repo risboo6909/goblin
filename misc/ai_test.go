@@ -192,6 +192,36 @@ func TestShuffleIntSlice(t *testing.T) {
 
 }
 
+func TestIsImportantSquare(t *testing.T) {
+
+	board := NewBoard(19, 19)
+	assertEqual(t, IsImportantSquare(board, 20, 4), false)
+
+	board.SetCell(0, 0, X)
+	assertEqual(t, IsImportantSquare(board, 20, 4), true)
+
+	board = NewBoard(19, 19)
+	board.SetCell(8, 1, O)
+	assertEqual(t, IsImportantSquare(board, 20, 4), false)
+
+	board.SetCell(18, 18, X)
+	assertEqual(t, IsImportantSquare(board, 358, 4), true)
+	assertEqual(t, IsImportantSquare(board, 356, 4), false)
+
+	board = NewBoard(11, 11)
+	board.SetCell(5, 5, X)
+	assertEqual(t, IsImportantSquare(board, 45, 4), false)
+	assertEqual(t, IsImportantSquare(board, 46, 4), true)
+	assertEqual(t, IsImportantSquare(board, 47, 4), true)
+	assertEqual(t, IsImportantSquare(board, 48, 4), true)
+	assertEqual(t, IsImportantSquare(board, 49, 4), true)
+	assertEqual(t, IsImportantSquare(board, 50, 4), true)
+	assertEqual(t, IsImportantSquare(board, 51, 4), true)
+	assertEqual(t, IsImportantSquare(board, 52, 4), true)
+	assertEqual(t, IsImportantSquare(board, 53, 4), true)
+	assertEqual(t, IsImportantSquare(board, 54, 4), false)
+}
+
 func TestMakeSearchPatterns(t *testing.T) {
 
 	generateWinningPatterns(5)
@@ -232,7 +262,7 @@ func TestMonteCarloBestMove(t *testing.T) {
 	result, _ = MonteCarloBestMove(board, AIOptions{AIPlayer: X, winSequenceLength: 5}, 6*6, 100, O)
 
 	// Better luck next time, O was really good in this game
-	assertEqual(t, result, CellPosition{5, 5})
+	assertEqual(t, result, CellPosition{0, 0})
 
 	board = NewBoard(6, 6)
 

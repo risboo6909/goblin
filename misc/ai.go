@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"fmt"
+	"runtime"
 )
 
 // KMPPrefixTable is a helper function for KMPSearch that generates
@@ -319,42 +320,72 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 	// analysis will be performed in other methods
 
 	opponent := switchPlayer(options.AIPlayer)
+
 	scores := make([]int, board.NumCells())
+
+	type trialType struct {board *BoardDescription
+			       whoMoves Cell}
+
+	var (
+		sem = make(chan int, runtime.GOMAXPROCS(0))
+		out = make(chan trialType, trials)
+	)
+
 
 	// freeIndices are always the same
 	freeIndices := board.GetFreeIndices()
 
 	for trial := 0; trial < trials; trial++ {
 
-		// clone existing board
-		clonedBoard := CloneBoard(board)
+		go func() {
 
-		// shuffle free cells
-		free := ShuffleIntSlice(freeIndices)
+			sem <- 1
 
-		// compute number of iterations for each trial
-		iterations := minIntPair(minIntPair(board.NumFreeCells(), maxDepth), len(free))
+			// clone existing board
+			clonedBoard := CloneBoard(board)
 
-		whoMoves := movesFirst
+			// shuffle free cells
+			tmp := make([]int, board.NumCells())
+			copy(tmp, freeIndices)
 
-		for i := 1;; i++ {
+			freeShuffled := ShuffleIntSlice(tmp)
 
-			clonedBoard.SetCellLinear(free[0], whoMoves)
+			// compute number of iterations for each trial
+			iterations := minIntPair(minIntPair(board.NumFreeCells(), maxDepth), len(freeShuffled))
 
-			// if there is a winner on current move
-			winner, _ := checkWin(clonedBoard, whoMoves)
+			whoMoves := movesFirst
 
-			if winner {
-				updateScores(clonedBoard, opponent, whoMoves, scores)
-				break
+			for i := 1;; i++ {
+
+				clonedBoard.SetCellLinear(freeShuffled[0], whoMoves)
+
+				// if there is a winner on current move
+				winner, _ := checkWin(clonedBoard, whoMoves)
+
+				if winner {
+					out<- trialType{clonedBoard, whoMoves}
+					break
+				}
+
+				if i < iterations {
+					whoMoves = switchPlayer(whoMoves)
+					freeShuffled = freeShuffled[1:]
+				} else {
+					out<- trialType{}
+					break
+				}
 			}
 
-			if i < iterations {
-				whoMoves = switchPlayer(whoMoves)
-				free = free[1:]
-			} else {
-				break
-			}
+			<-sem
+		}()
+
+	}
+
+	resultsReceived := 0
+	for ;resultsReceived < trials; resultsReceived++ {
+		data := <-out
+		if data.board != nil {
+			updateScores(data.board, opponent, data.whoMoves, scores)
 		}
 	}
 
@@ -432,19 +463,18 @@ func ReduceSearchSpaceMonteCarlo(board *BoardDescription, options AIOptions,
 // given vicinity
 func IsImportantSquare(board *BoardDescription, position, halfSide int) bool {
 
-	// get square around cell given by position argument with the side length
-	// given by halfSide argument
-
+	// get square around cell given by position argument with the
+	// side length given by halfSide argument
 	col, row, _ := board.FromLinear(position)
 
-	leftBorderCol := maxIntPair(col - halfSide, 0)
-	leftBorderRow := maxIntPair(row - halfSide, 0)
-	rightBorderCol := minIntPair(col + halfSide, board.NumCells())
-	rightBorderRow := minIntPair(row + halfSide, board.NumCells())
+	upperLeftCol := maxIntPair(col - halfSide, 0)
+	upperLeftRow := maxIntPair(row - halfSide, 0)
+	bottomRightCol := minIntPair(col + halfSide, board.CellsHoriz)
+	bottomRightRow := minIntPair(row + halfSide, board.CellsVert)
 
 	// check if all the cell inside the square are empty
-	for col := leftBorderCol; col < rightBorderCol; col++ {
-		for row := leftBorderRow; row < rightBorderRow; row++ {
+	for col := upperLeftCol; col < bottomRightCol; col++ {
+		for row := upperLeftRow; row < bottomRightRow; row++ {
 			cell := board.GetCell(col, row)
 			if cell != E {
 				return true
@@ -453,6 +483,16 @@ func IsImportantSquare(board *BoardDescription, position, halfSide int) bool {
 	}
 
 	return false
+}
+
+func GetCellsToAnalyze(board *BoardDescription, halfSide int) []int {
+	result := make([]int, 0, board.NumCells())
+	for _, cellIdx := range board.GetFreeIndices() {
+		if IsImportantSquare(board, cellIdx, halfSide) {
+			result = append(result, cellIdx)
+		}
+	}
+	return result
 }
 
 // Statically analyze board position by search some simple winning patterns
@@ -513,8 +553,12 @@ func MinMaxEval(board *BoardDescription, options AIOptions, cellsToCheck[] int,
 			board = CloneBoard(boardCopy)
 			board.SetCellLinear(cellIdx, whoMoves)
 
-			_, curVal := MinMaxEval(board, options, board.GetFreeIndices(),
-				LinearMove{cellIdx, switchPlayer(whoMoves)}, depth - 1)
+			//toAnalyze := GetCellsToAnalyze(board, options.winSequenceLength - 1)
+
+			toAnalyze := board.GetFreeIndices()
+
+			_, curVal := MinMaxEval(board, options, toAnalyze,
+						LinearMove{cellIdx, switchPlayer(whoMoves)}, depth - 1)
 
 			if whoMoves == options.AIPlayer {
 
