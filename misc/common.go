@@ -79,3 +79,9 @@ func minIntPair(a, b int) int {
 func maxIntPair(a, b int) int {
 	return int(math.Max(float64(a), float64(b)))
 }
+
+// the idea has been taken from
+// https://github.com/bradfitz/iter/
+func intRange(n int) []int {
+	return make([]int, n)
+}
