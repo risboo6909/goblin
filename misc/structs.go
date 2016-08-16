@@ -37,7 +37,8 @@ type CellPosition struct {
 	Col, Row int
 }
 
-// Interval represents indexes of start and end of an n-length chain`
+// Interval represents indexes of start and end of an n-length chain
+
 type Interval struct {
 
 	Direction  ScanDirection
@@ -47,7 +48,32 @@ type Interval struct {
 
 }
 
+// List of intervals is sortable by coordinates
+
+type IntervalList []Interval
+
+func (slice IntervalList) Len() int {
+	return len(slice)
+}
+
+func (slice IntervalList) Less(i, j int) bool {
+	if slice[i].From.Row < slice[j].From.Row {
+		return true
+	} else if slice[i].From.Row == slice[j].From.Row {
+		if slice[i].From.Col < slice[j].From.Col{
+			return true
+		}
+	}
+	return false
+}
+
+func (slice IntervalList) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
+
 // Unfolds interval encoded by Interval data structure
+
 func (interval Interval) Unfold() []CellPosition {
 
 	result := []CellPosition{}
