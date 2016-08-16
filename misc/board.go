@@ -12,7 +12,7 @@ const (
 	// O value
 	O = 'O'
 	// EMPTY cell value
-	E = ' '
+	E = 0
 )
 
 
@@ -45,7 +45,7 @@ const (
 
 func diagonalDistance(startCol, startRow, endCol, endRow int) int {
 	diagonalDistance := int(((math.Abs(float64(endCol-startCol)) +
-		math.Abs(float64(endRow-startRow)) + 2) / 2))
+		math.Abs(float64(endRow-startRow)) + 2) * 0.5))
 	return diagonalDistance
 }
 
@@ -53,13 +53,7 @@ func diagonalDistance(startCol, startRow, endCol, endRow int) int {
 // slice for a board contents
 func NewBoard(cellsHoriz, cellsVert int) *BoardDescription {
 
-	board := &BoardDescription{cellsHoriz, cellsVert, make([]Cell, cellsHoriz*cellsVert)}
-
-	// fill default EMPTY cells
-	for i := range board.Content {
-		board.Content[i] = E
-	}
-
+	board := &BoardDescription{cellsHoriz, cellsVert, make([]Cell, cellsHoriz * cellsVert)}
 	return board
 }
 
@@ -152,34 +146,42 @@ func (p *BoardDescription) GetVertSlice(col, start, end int) []Cell {
 // the endCol, endRow inclusive
 func (p *BoardDescription) GetDiagonalSliceXY(startCol, startRow, endCol, endRow int) []Cell {
 
-	var (
-		dd = diagonalDistance(startCol, startRow, endCol, endRow)
-		idx, tmp = 0, make([]Cell, dd)
-	)
+	var dd = diagonalDistance(startCol, startRow, endCol, endRow)
 
 	if dd == 1 {
 		return []Cell{p.GetCell(startCol, startRow)}
 	}
 
-	if startCol < endCol && startRow < endRow {
-		for idx < dd {
-			tmp[idx] = p.GetCell(startCol, startRow)
-			idx++; startCol++; startRow++
+	var idx, tmp = 0, make([]Cell, dd)
+
+	if startCol > endCol {
+
+		if startRow < endRow {
+			for idx < dd {
+				tmp[idx] = p.GetCell(startCol, startRow)
+				idx++; startCol--; startRow++
+			}
+
+		} else if startRow > endRow {
+			for idx < dd {
+				tmp[idx] = p.GetCell(startCol, startRow)
+				idx++; startCol--; startRow--
+			}
 		}
-	} else if startCol > endCol && startRow < endRow {
-		for idx < dd {
-			tmp[idx] = p.GetCell(startCol, startRow)
-			idx++; startCol--; startRow++
-		}
-	} else if startCol > endCol && startRow > endRow {
-		for idx < dd {
-			tmp[idx] = p.GetCell(startCol, startRow)
-			idx++; startCol--; startRow--
-		}
-	} else if startCol < endCol && startRow > endRow {
-		for idx < dd {
-			tmp[idx] = p.GetCell(startCol, startRow)
-			idx++; startCol++; startRow--
+
+	} else if startCol < endCol {
+
+		if startRow < endRow {
+			for idx < dd {
+				tmp[idx] = p.GetCell(startCol, startRow)
+				idx++; startCol++; startRow++
+			}
+
+		} else if startRow > endRow {
+			for idx < dd {
+				tmp[idx] = p.GetCell(startCol, startRow)
+				idx++; startCol++; startRow--
+			}
 		}
 	}
 
@@ -223,7 +225,7 @@ func (p *BoardDescription) GetRLDiagonal(col, row int) []Cell {
 // ToLinear converts col and row into linear address
 func (p *BoardDescription) ToLinear(col, row int) (int, error) {
 	if col >= 0 && row >= 0 && col < p.CellsHoriz && row < p.CellsVert {
-		return row*p.CellsHoriz + col, nil
+		return row * p.CellsHoriz + col, nil
 	}
 	return -1, errors.New("Index out of bounds error")
 }
