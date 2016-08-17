@@ -132,8 +132,8 @@ const (
 )
 
 const (
-	WIN = 10
-	LOST = -WIN
+	WON = 10
+	LOST = -WON
 	NOTHING = 0
 )
 

@@ -58,7 +58,8 @@ func CreateNewSession(boardSide, winSeqLen int, player Cell) Session {
 
 		AIOptions{switchPlayer(player),
 			  winSeqLen,
-		          4},
+		          5,
+			  true},
 
 		generateSessionId(10),
 		E,
@@ -69,7 +70,6 @@ func CreateNewSession(boardSide, winSeqLen int, player Cell) Session {
 func RemoveSession() {
 
 }
-
 
 func (s *Session) MakeMove() {
 	winner, intervals := MakeMove(s.Board, s.AI)

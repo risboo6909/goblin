@@ -32,7 +32,6 @@ func TestFindChainDiagonal(t *testing.T) {
 	result := FindPattern(board, getWinningPatterns(X).winNow)
 
 	sort.Sort(result)
-	//fmt.Println('*', result)
 
 	assertEqual(t, result[0], Interval{LRDiagonal, CellPosition{2, 2}, CellPosition{5, 5}})
 	assertEqual(t, result[1], Interval{LRDiagonal, CellPosition{7, 3}, CellPosition{10, 6}})
@@ -288,6 +287,93 @@ func TestMonteCarloBestMove(t *testing.T) {
 
 }
 
+func TestMinMaxEval(t *testing.T) {
+
+	// alpha-beta pruning disabled
+
+	// test 1 - four in a row - WIN
+
+	board := NewBoard(5, 5)
+
+	board.SetCell(0, 0, X)
+	board.SetCell(1, 1, X)
+	board.SetCell(2, 2, X)
+
+	options := AIOptions{ AIPlayer: X,
+			winSequenceLength: 4,
+			maxDepth: 3,
+			useAlphaBeta: false }
+
+	generateWinningPatterns(4)
+
+	move, score := MinMaxEval(board, options, nil, LinearMove{0, options.AIPlayer}, options.maxDepth)
+	col, row, _ := board.FromLinear(move)
+
+	assertEqual(t, col, 3)
+	assertEqual(t, row, 3)
+	assertEqual(t, score, WON)
+
+	// test 2 - five in a row - WIN
+
+	board = NewBoard(5, 5)
+
+	board.SetCell(0, 0, O)
+	board.SetCell(0, 1, O)
+	board.SetCell(0, 2, O)
+	board.SetCell(0, 3, O)
+
+	options = AIOptions{ AIPlayer: O,
+			winSequenceLength: 5,
+			maxDepth: 3,
+			useAlphaBeta: false }
+
+	generateWinningPatterns(5)
+
+	move, score = MinMaxEval(board, options, nil, LinearMove{0, options.AIPlayer}, options.maxDepth)
+	col, row, _ = board.FromLinear(move)
+
+	assertEqual(t, col, 0)
+	assertEqual(t, row, 4)
+	assertEqual(t, score, WON)
+
+	// test 3 - five in a row - LOST
+
+	board = NewBoard(6, 6)
+
+	board.SetCell(3, 3, O)
+	board.SetCell(3, 4, O)
+	board.SetCell(4, 3, O)
+
+	options = AIOptions{ AIPlayer: X,
+			winSequenceLength: 4,
+			maxDepth: 4,
+			useAlphaBeta: false }
+
+	generateWinningPatterns(4)
+
+	move, score = MinMaxEval(board, options, nil, LinearMove{0, options.AIPlayer}, options.maxDepth)
+
+	assertEqual(t, score, LOST)
+
+	// not enough analysis depth to detect lost position
+
+	options = AIOptions{ AIPlayer: X,
+			winSequenceLength: 4,
+			maxDepth: 3,
+			useAlphaBeta: false }
+
+	generateWinningPatterns(4)
+
+	move, score = MinMaxEval(board, options, nil, LinearMove{0, options.AIPlayer}, options.maxDepth)
+
+	assertEqual(t, score, NOTHING)
+
+	// alpha-beta pruning enabled
+
+	// add some tests here!
+}
+
+
 // Some benchmarks
 
 // Monte-Carlo benchmarks start >>>
@@ -342,8 +428,7 @@ func BenchmarkMinMaxEval6x6_1(b *testing.B) {
 		              useAlphaBeta: false }
 
 	for n := 0; n < b.N; n++ {
-		MinMaxEval(board, options, board.GetFreeIndices(),
-			LinearMove{0, options.AIPlayer}, options.maxDepth)
+		MinMaxEval(board, options, nil, LinearMove{0, options.AIPlayer}, options.maxDepth)
 	}
 }
 

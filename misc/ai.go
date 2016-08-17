@@ -233,7 +233,7 @@ func switchPlayer(player Cell) Cell {
 
 // checkWin determines whether there is N in-a-row Xs or Os on a board
 // which would mean that there is a winner and the game is over
-func checkWin(board *BoardDescription, player Cell) (bool, []Interval) {
+func checkWin(board *BoardDescription, player Cell) (bool, IntervalList) {
 
 	pattern := getWinningPatterns(player).winNow
 
@@ -495,7 +495,7 @@ func StaticPositionAnalyzer(board *BoardDescription, options AIOptions, whoMoves
 
 	if len(interval) != 0 {
 		if whoMoves == options.AIPlayer {
-			return WIN
+			return WON
 		} else {
 			return LOST
 		}
