@@ -445,43 +445,6 @@ func ReduceSearchSpaceMonteCarlo(board *BoardDescription, options AIOptions,
 	return cellsToCheck
 }
 
-// IsImportantSquare checks whether given cell is important to analyze with minmax algorithm.
-// Cell is considered important if there are non-empty cells around it exist in a
-// given vicinity
-func IsImportantSquare(board *BoardDescription, position, halfSide int) bool {
-
-	// get square around cell given by position argument with the
-	// side length given by halfSide argument
-	col, row, _ := board.FromLinear(position)
-
-	upperLeftCol := maxIntPair(col - halfSide, 0)
-	upperLeftRow := maxIntPair(row - halfSide, 0)
-	bottomRightCol := minIntPair(col + halfSide, board.CellsHoriz)
-	bottomRightRow := minIntPair(row + halfSide, board.CellsVert)
-
-	// check if all the cell inside the square are empty
-	for col := upperLeftCol; col < bottomRightCol; col++ {
-		for row := upperLeftRow; row < bottomRightRow; row++ {
-			cell := board.GetCell(col, row)
-			if cell != E {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-func GetCellsToAnalyze(board *BoardDescription, halfSide int) []int {
-	result := make([]int, 0, board.NumCells())
-	for _, cellIdx := range board.GetFreeIndices() {
-		if IsImportantSquare(board, cellIdx, halfSide) {
-			result = append(result, cellIdx)
-		}
-	}
-	return result
-}
-
 // Statically analyze board position by search some simple winning patterns
 // Main principles are:
 // 1. n in-a-row or n-1 in a row have the biggest grade
@@ -490,23 +453,27 @@ func StaticPositionAnalyzer(board *BoardDescription, options AIOptions, whoMoves
 
 	winningPatterns := getWinningPatterns(whoMoves)
 
-	interval := FindPattern(board, winningPatterns.winNow)
-	//invervals2 := FindPattern(board, whoMoves, winningPatterns.winInAMove)
+	// winning/losing in a move position
+	intervals := FindPattern(board, winningPatterns.winInAMove)
 
-	if len(interval) != 0 {
+	if len(intervals) != 0 {
+		if whoMoves == options.AIPlayer {
+			return WON - 1
+		} else {
+			return LOST + 1
+		}
+	}
+
+	// win/lose now
+	intervals2 := FindPattern(board, winningPatterns.winNow)
+
+	if len(intervals2) != 0 {
 		if whoMoves == options.AIPlayer {
 			return WON
 		} else {
 			return LOST
 		}
 	}
-
-	//if len(intervals1) != 0 || len(invervals2) != 0 {
-	//
-	//	//fmt.Println(board, intervals1, invervals2, winningPatterns.winInAMove)
-	//
-	//	return WIN
-	//}
 
 	return NOTHING
 
@@ -524,7 +491,7 @@ func MinMaxEval(board *BoardDescription, options AIOptions, cellsToCheck[] int,
 
 	positionScore := StaticPositionAnalyzer(board, options, whoMoved)
 
-	if len(board.GetFreeIndices()) != 0 {
+	if board.NumFreeCells() != 0 {
 
 		if depth > 0 && !winner {
 
