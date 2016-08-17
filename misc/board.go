@@ -52,7 +52,6 @@ func diagonalDistance(startCol, startRow, endCol, endRow int) int {
 // NewBoard creates a new struct of type BoardDescription with allocated
 // slice for a board contents
 func NewBoard(cellsHoriz, cellsVert int) *BoardDescription {
-
 	board := &BoardDescription{cellsHoriz, cellsVert, make([]Cell, cellsHoriz * cellsVert)}
 	return board
 }

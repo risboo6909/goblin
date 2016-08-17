@@ -1,11 +1,11 @@
 package misc
 
 import (
-	"math/rand"
-	"math"
-	"sort"
 	"fmt"
+	"math"
+	"math/rand"
 	"runtime"
+	"sort"
 )
 
 // KMPPrefixTable is a helper function for KMPSearch that generates
@@ -20,12 +20,13 @@ func KMPPrefixTable(pattern []Cell) []int {
 		if pattern[i] == pattern[j] {
 
 			result[j] = i + 1
-			i++; j++
+			i++
+			j++
 
 		} else {
 
 			if i > 0 {
-				i = result[i - 1]
+				i = result[i-1]
 			}
 
 			if pattern[i] == pattern[j] {
@@ -45,6 +46,7 @@ func KMPPrefixTable(pattern []Cell) []int {
 // KMPSearch uses Knuth-Morris-Pratt algorithm to find needles in haystacks
 // in O(n) instead of naive O(n^2) =)
 func KMPSearch(needle, haystack []Cell) (bool, int) {
+
 	table := KMPPrefixTable(needle)
 	i, j := 0, 0
 
@@ -77,8 +79,8 @@ func KMPSearch(needle, haystack []Cell) (bool, int) {
 // slice ys, returns [] if xs is not in ys
 func findAllSubslices(xs, ys []Cell) []int {
 
-	var indices []int
-	var offset int
+	indices := []int{}
+	offset := 0
 
 	for {
 
@@ -89,7 +91,6 @@ func findAllSubslices(xs, ys []Cell) []int {
 			indices = append(indices, offset+idx)
 			ys = ys[delta:]
 			offset += delta
-
 		} else {
 			break
 		}
@@ -132,7 +133,7 @@ func scanLine(line []Cell, col, row int, pattern []Cell, direction ScanDirection
 
 func generateWinningPatterns(winLength int) {
 
-	fillPattern := func (player Cell, length int) []Cell {
+	fillPattern := func(player Cell, length int) []Cell {
 		tmp := make([]Cell, length)
 		for j := 0; j < length; j++ {
 			tmp[j] = player
@@ -145,14 +146,14 @@ func generateWinningPatterns(winLength int) {
 
 	// all - 1 in a row + empty cells on sides always
 	// leads to victory for player
-	winningPatternsX.winInAMove = fillPattern(X, winLength + 1)
+	winningPatternsX.winInAMove = fillPattern(X, winLength+1)
 	winningPatternsX.winInAMove[0] = E
 	winningPatternsX.winInAMove[winLength] = E
 
 	// same for O player
 	winningPatternsO.winNow = fillPattern(O, winLength)
 
-	winningPatternsO.winInAMove = fillPattern(O, winLength + 1)
+	winningPatternsO.winInAMove = fillPattern(O, winLength+1)
 	winningPatternsO.winInAMove[0] = E
 	winningPatternsO.winInAMove[winLength] = E
 
@@ -179,37 +180,49 @@ func FindPattern(board *BoardDescription, pattern []Cell) IntervalList {
 
 	for i := 0; i < board.CellsVert; i++ {
 		tmp := scanLine(board.GetHorizSlice(i, 0, board.CellsHoriz-1), 0, i, pattern, horizontal)
-		if tmp != nil { matchHoriz = append(matchHoriz, tmp...)	}
+		if tmp != nil {
+			matchHoriz = append(matchHoriz, tmp...)
+		}
 	}
 
 	// then vertical
 
 	for i := 0; i < board.CellsHoriz; i++ {
 		tmp := scanLine(board.GetVertSlice(i, 0, board.CellsVert-1), i, 0, pattern, vertical)
-		if tmp != nil {	matchVert = append(matchVert, tmp...) }
+		if tmp != nil {
+			matchVert = append(matchVert, tmp...)
+		}
 	}
 
 	// and finally diagonal
 
 	for i := 0; i < board.CellsVert; i++ {
 		tmp := scanLine(board.GetRLDiagonal(0, i), i, 0, pattern, RLDiagonal)
-		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
+		if tmp != nil {
+			matchDiag = append(matchDiag, tmp...)
+		}
 	}
 
 	for i := 1; i < board.CellsHoriz; i++ {
-		tmp := scanLine(board.GetRLDiagonal(i, board.CellsVert - 1), board.CellsVert - 1, i,
+		tmp := scanLine(board.GetRLDiagonal(i, board.CellsVert-1), board.CellsVert-1, i,
 			pattern, RLDiagonal)
-		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
+		if tmp != nil {
+			matchDiag = append(matchDiag, tmp...)
+		}
 	}
 
 	for i := 0; i < board.CellsHoriz; i++ {
 		tmp := scanLine(board.GetLRDiagonal(i, 0), i, 0, pattern, LRDiagonal)
-		if tmp != nil { matchDiag = append(matchDiag, tmp...) }
+		if tmp != nil {
+			matchDiag = append(matchDiag, tmp...)
+		}
 	}
 
 	for i := 1; i < board.CellsVert; i++ {
 		tmp := scanLine(board.GetLRDiagonal(0, i), 0, i, pattern, LRDiagonal)
-		if tmp != nil {	matchDiag = append(matchDiag, tmp...) }
+		if tmp != nil {
+			matchDiag = append(matchDiag, tmp...)
+		}
 	}
 
 	return append(matchHoriz, append(matchVert, matchDiag...)...)
@@ -217,8 +230,8 @@ func FindPattern(board *BoardDescription, pattern []Cell) IntervalList {
 
 // ShuffleIntSlice shuffles a slice of ints in-place
 func ShuffleIntSlice(slice []int) []int {
-	for i := 0; i < len(slice) - 1; i++ {
-		idx := i + 1 + rand.Intn(len(slice) - i - 1)
+	for i := 0; i < len(slice)-1; i++ {
+		idx := i + 1 + rand.Intn(len(slice)-i-1)
 		slice[i], slice[idx] = slice[idx], slice[i]
 	}
 	return slice
@@ -244,18 +257,6 @@ func checkWin(board *BoardDescription, player Cell) (bool, IntervalList) {
 	}
 
 	return false, intervals
-}
-
-func hasWinner(board *BoardDescription) (bool, Cell) {
-	winner, _ := checkWin(board, X)
-	if winner {
-		return true, X
-	}
-	winner, _ = checkWin(board, O)
-	if winner {
-		return true, O
-	}
-	return false, O
 }
 
 // updateScores updates scores array according to Monte-Carlo outcomes
@@ -308,21 +309,20 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 
 	opponent := switchPlayer(options.AIPlayer)
 
-	scores := make([]int, board.NumCells())
+	type trialType struct {
+		board    *BoardDescription
+		whoMoves Cell
+	}
 
-	type trialType struct {board *BoardDescription
-			       whoMoves Cell}
-
-	var (
-		sem = make(chan int, runtime.GOMAXPROCS(0))
-		out = make(chan trialType, trials)
-	)
-
+	sem := make(chan int, runtime.GOMAXPROCS(0))
+	out := make(chan trialType, trials)
 
 	// freeIndices are always the same
 	freeIndices := board.GetFreeIndices()
 
 	for trial := 0; trial < trials; trial++ {
+
+		numFreeCells := board.NumFreeCells()
 
 		go func() {
 
@@ -338,28 +338,26 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 			freeShuffled := ShuffleIntSlice(tmp)
 
 			// compute number of iterations for each trial
-			iterations := minIntPair(minIntPair(board.NumFreeCells(), maxDepth),
-						 len(freeShuffled))
+			iterations := minIntPair(minIntPair(numFreeCells, maxDepth), len(freeShuffled))
 
 			whoMoves := movesFirst
 
 			for i := 1;; i++ {
 
-				clonedBoard.SetCellLinear(freeShuffled[0], whoMoves)
+				clonedBoard.SetCellLinear(freeShuffled[i-1], whoMoves)
 
 				// if there is a winner on current move
 				winner, _ := checkWin(clonedBoard, whoMoves)
 
 				if winner {
-					out<- trialType{clonedBoard, whoMoves}
+					out <- trialType{clonedBoard, whoMoves}
 					break
 				}
 
 				if i < iterations {
 					whoMoves = switchPlayer(whoMoves)
-					freeShuffled = freeShuffled[1:]
 				} else {
-					out<- trialType{}
+					out <- trialType{}
 					break
 				}
 			}
@@ -368,6 +366,8 @@ func MonteCarloEval(board *BoardDescription, options AIOptions, maxDepth, trials
 		}()
 
 	}
+
+	scores := make([]int, board.NumCells())
 
 	for resultsReceived := 0; resultsReceived < trials; resultsReceived++ {
 		data := <-out
@@ -438,9 +438,8 @@ func filterArrangedResults(moves IntFloatPairs, threshold float64) []int {
 
 // Reduce search space for minmax analysis by figuring out the most important move using
 // Monte-Carlo heuristic
-func ReduceSearchSpaceMonteCarlo(board *BoardDescription, options AIOptions,
-					whoMoves Cell, maxDepth int, threshold float64) []int {
-	arrangedMoves := ArrangeMonteCarloResults(board, options, board.NumFreeCells(),	maxDepth, options.AIPlayer)
+func ReduceSearchSpaceMonteCarlo(board *BoardDescription, options AIOptions, maxDepth int, threshold float64) []int {
+	arrangedMoves := ArrangeMonteCarloResults(board, options, board.NumFreeCells(), maxDepth, options.AIPlayer)
 	cellsToCheck := filterArrangedResults(arrangedMoves, threshold)
 	return cellsToCheck
 }
@@ -475,25 +474,26 @@ func StaticPositionAnalyzer(board *BoardDescription, options AIOptions, whoMoves
 		}
 	}
 
+	// scan for longest chains
+
 	return NOTHING
 
 }
 
 // MinMax evaluation with optional alpha-beta pruning
-func MinMaxEval(board *BoardDescription, options AIOptions, cellsToCheck[] int,
-				lastMove LinearMove, depth int) (int, int) {
+func MinMaxEval(board *BoardDescription, options AIOptions, cellsToCheck []int,
+	lastMove LinearMove, depth int) (int, int) {
 
 	whoMoves := lastMove.player
 	whoMoved := switchPlayer(whoMoves)
 
 	selectedMove := lastMove.position
-	winner, _ := hasWinner(board)
 
 	positionScore := StaticPositionAnalyzer(board, options, whoMoved)
 
 	if board.NumFreeCells() != 0 {
 
-		if depth > 0 && !winner {
+		if depth > 0 && positionScore != WON && positionScore != LOST {
 
 			if whoMoves == options.AIPlayer {
 				positionScore = -math.MaxInt64
@@ -521,11 +521,9 @@ func MinMaxEval(board *BoardDescription, options AIOptions, cellsToCheck[] int,
 				board = CloneBoard(boardCopy)
 				board.SetCellLinear(cellIdx, whoMoves)
 
-				//toAnalyze := board.GetFreeIndices()
-
 				_, curVal := MinMaxEval(board, options, nil,
-					                LinearMove{cellIdx, switchPlayer(whoMoves)},
-							depth - 1)
+					LinearMove{cellIdx, switchPlayer(whoMoves)},
+					depth-1)
 
 				if whoMoves == options.AIPlayer {
 
@@ -568,7 +566,7 @@ func MakeMove(board *BoardDescription, options AIOptions) (Cell, []Interval) {
 		return opponent, intervals
 	}
 
-	cellsToCheck := ReduceSearchSpaceMonteCarlo(board, options, options.AIPlayer, 500, 0.1)
+	cellsToCheck := ReduceSearchSpaceMonteCarlo(board, options, 500, 0.1)
 
 	if len(cellsToCheck) == 0 {
 		cellsToCheck = nil
@@ -577,7 +575,7 @@ func MakeMove(board *BoardDescription, options AIOptions) (Cell, []Interval) {
 	fmt.Println(cellsToCheck)
 
 	bestLinear, bestVal := MinMaxEval(board, options, cellsToCheck,
-					  LinearMove{0, options.AIPlayer}, options.maxDepth)
+		LinearMove{0, options.AIPlayer}, options.maxDepth)
 
 	col, row, err := board.FromLinear(bestLinear)
 

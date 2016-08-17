@@ -111,10 +111,10 @@ func (interval Interval) Unfold() []CellPosition {
 }
 
 type AIOptions struct {
-
 	AIPlayer Cell
 	winSequenceLength int
 	maxDepth int
+	useGoRoutines bool
 	useAlphaBeta bool
 }
 
@@ -132,7 +132,7 @@ const (
 )
 
 const (
-	WON = 10
+	WON = 100
 	LOST = -WON
 	NOTHING = 0
 )

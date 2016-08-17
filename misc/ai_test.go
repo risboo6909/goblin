@@ -390,6 +390,7 @@ func BenchmarkFindPattern(b *testing.B) {
 func BenchmarkMinMaxEval6x6_1(b *testing.B) {
 
 	board := NewBoard(6, 6)
+	generateWinningPatterns(3)
 
 	options := AIOptions{ AIPlayer: X,
 		              winSequenceLength: 3,
