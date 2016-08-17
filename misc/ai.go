@@ -486,44 +486,43 @@ func MinMaxEval(board *BoardDescription, options AIOptions, cellsToCheck []int,
 
 	whoMoves := lastMove.player
 	whoMoved := switchPlayer(whoMoves)
-
 	selectedMove := lastMove.position
 
 	positionScore := StaticPositionAnalyzer(board, options, whoMoved)
 
 	if board.NumFreeCells() != 0 {
 
+		cellsGen := false
+		if cellsToCheck == nil {
+			cellsToCheck = intRange(board.NumCells())
+			cellsGen = true
+		}
+
 		if depth > 0 && positionScore != WON && positionScore != LOST {
 
+			positionScore = math.MaxInt64
 			if whoMoves == options.AIPlayer {
-				positionScore = -math.MaxInt64
-			} else {
-				positionScore = math.MaxInt64
+				positionScore = -positionScore
 			}
 
 			boardCopy := CloneBoard(board)
-			cellsGen := false
-
-			if cellsToCheck == nil {
-				cellsToCheck = intRange(boardCopy.NumCells())
-				cellsGen = true
-			}
 
 			for idx, cellIdx := range cellsToCheck {
 
 				if cellsGen {
+					// swap index in value in case of intRange generator
+					if boardCopy.GetCellLinear(idx) != E { continue }
 					cellIdx = idx
-					if boardCopy.GetCellLinear(cellIdx) != E {
-						continue
-					}
 				}
 
 				board = CloneBoard(boardCopy)
+
 				board.SetCellLinear(cellIdx, whoMoves)
 
+				//if options.useGoRoutines && depth == options.maxDepth
+
 				_, curVal := MinMaxEval(board, options, nil,
-					LinearMove{cellIdx, switchPlayer(whoMoves)},
-					depth-1)
+					LinearMove{cellIdx, whoMoved}, depth-1)
 
 				if whoMoves == options.AIPlayer {
 
